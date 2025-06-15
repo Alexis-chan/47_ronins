@@ -14,6 +14,7 @@ from settings import (
     GRAVITY,
     JUMP_SPEED,
     WINDOW_HEIGHT,
+    PLAYER_SCALE,
     PLAYER_STAND_IMG,
     PLAYER_WALK_IMG,
     PLAYER_JUMP_IMG,
@@ -34,18 +35,24 @@ class Player:
 
     def __init__(self, pos: tuple[int, int]):
         self.images = {
-            "stand": pygame.image.load(PLAYER_STAND_IMG).convert_alpha(),
-            "walk": pygame.image.load(PLAYER_WALK_IMG).convert_alpha(),
-            "jump": pygame.image.load(PLAYER_JUMP_IMG).convert_alpha(),
-            "sit": pygame.image.load(PLAYER_SIT_IMG).convert_alpha(),
+            "stand": pygame.image.load(str(PLAYER_STAND_IMG)).convert_alpha(),
+            "walk": pygame.image.load(str(PLAYER_WALK_IMG)).convert_alpha(),
+            "jump": pygame.image.load(str(PLAYER_JUMP_IMG)).convert_alpha(),
+            "sit": pygame.image.load(str(PLAYER_SIT_IMG)).convert_alpha(),
         }
+
+        # Réduction des sprites pour une taille adaptée à l'écran
+        for key, img in self.images.items():
+            w = int(img.get_width() * PLAYER_SCALE)
+            h = int(img.get_height() * PLAYER_SCALE)
+            self.images[key] = pygame.transform.scale(img, (w, h))
         self.current_image = self.images["stand"]
         width, height = self.current_image.get_size()
         self.rect = pygame.Rect(pos[0], pos[1], width, height)
         self.vel = pygame.Vector2(0, 0)
         self.on_ground = False
         self.facing_left = False
-        self.jump_sound = pygame.mixer.Sound(JUMP_SOUND_FILE)
+        self.jump_sound = pygame.mixer.Sound(str(JUMP_SOUND_FILE))
 
     # ————————————————————
     # Boucle d’update

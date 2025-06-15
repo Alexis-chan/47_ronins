@@ -3,7 +3,7 @@ Définit toutes les constantes de configuration du jeu : dimensions d’écran,
 Ce fichier centralise les paramètres pour simplifier les ajustements ultérieurs.
 """
 
-import pygame
+from pathlib import Path
 
 # —— Dimensions d’origine (pixel‑art) ——
 WINDOW_WIDTH: int = 320
@@ -17,6 +17,12 @@ DISPLAY_HEIGHT: int = WINDOW_HEIGHT * UPSCALE
 SKY_BLUE: tuple[int, int, int] = (92, 148, 252)  # Fond provisoire
 PLAYER_RED: tuple[int, int, int] = (222, 68, 55)
 
+# Taille du joueur (facteur de réduction des sprites d'origine)
+PLAYER_SCALE: float = 0.0625  # 1024px -> 64px environ
+
+# Mode plein écran
+FULLSCREEN: bool = True
+
 # —— Physique du joueur ——
 FPS: int = 60
 PLAYER_SPEED: float = 2.5  # Vitesse horizontale en px par frame (avant upscale)
@@ -27,12 +33,15 @@ JUMP_SPEED: float = -6.5   # Impulsion verticale du saut (négatif = vers le hau
 GROUND_Y: int = WINDOW_HEIGHT  # Limite inférieure (sol) pour collision simple
 
 # —— Assets ——
-BACKGROUND_IMG: str = "../assets/niveaux/background_forest.png"
-MUSIC_FILE: str = "../assets/son/Music1.wav"
-JUMP_SOUND_FILE: str = "../assets/son/386529__glennm__breathing_jumping.wav"
-PLAYER_STAND_IMG: str = "../assets/personnages/oishi_stand.png"
-PLAYER_WALK_IMG: str = "../assets/personnages/oishi_walk.png"
-PLAYER_JUMP_IMG: str = "../assets/personnages/oishi_jump.png"
-PLAYER_SIT_IMG: str = "../assets/personnages/oishi_sit.png"
+BASE_DIR: Path = Path(__file__).resolve().parent.parent
+ASSETS_DIR: Path = BASE_DIR / "assets"
+
+BACKGROUND_IMG: Path = ASSETS_DIR / "niveaux" / "background_forest.png"
+MUSIC_FILE: Path = ASSETS_DIR / "son" / "Music1.wav"
+JUMP_SOUND_FILE: Path = ASSETS_DIR / "son" / "386529__glennm__breathing_jumping.wav"
+PLAYER_STAND_IMG: Path = ASSETS_DIR / "personnages" / "oishi_stand.png"
+PLAYER_WALK_IMG: Path = ASSETS_DIR / "personnages" / "oishi_walk.png"
+PLAYER_JUMP_IMG: Path = ASSETS_DIR / "personnages" / "oishi_jump.png"
+PLAYER_SIT_IMG: Path = ASSETS_DIR / "personnages" / "oishi_sit.png"
 
 
