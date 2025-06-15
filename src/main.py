@@ -6,8 +6,8 @@ pour un rendu pixel‑perfect sans flou.
 
 from __future__ import annotations
 
-import os
 import sys
+from pathlib import Path
 import pygame
 
 from settings import (
@@ -19,6 +19,7 @@ from settings import (
     FPS,
     BACKGROUND_IMG,
     MUSIC_FILE,
+    FULLSCREEN,
 )
 from player import Player
 
@@ -31,21 +32,22 @@ def main() -> None:
     pygame.display.set_caption("47 Ronins Chats – Prototype")
 
    # Fenêtre et surface de rendu pixelisée
-    window = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
+    flags = pygame.FULLSCREEN if FULLSCREEN else 0
+    window = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT), flags)
     canvas = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT)).convert()
     clock = pygame.time.Clock()
 
 
-    # Gestion des chemins
-    script_dir = os.path.dirname(__file__)
-    music_path = os.path.join(script_dir, r"../assets/son/Music1.wav")
-    background_path = os.path.join(script_dir, BACKGROUND_IMG)
+    # Chemins absolus des assets
+    music_path = Path(MUSIC_FILE)
+    background_path = Path(BACKGROUND_IMG)
 
     # Chargement audio + image
-    pygame.mixer.music.load(music_path)
+    pygame.mixer.music.load(str(music_path))
     pygame.mixer.music.play(-1)
 
-    background = pygame.image.load(background_path).convert()
+    background = pygame.image.load(str(background_path)).convert()
+    background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
 
  
     # Entités
