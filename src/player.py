@@ -63,7 +63,7 @@ class Player:
         self.jump_sound = pygame.mixer.Sound(str(JUMP_SOUND_FILE))
 
     def _load_frames(self, path: str) -> list[pygame.Surface]:
-        """Découpe un sprite sheet horizontal en frames 32x32."""
+        """Découpe un sprite sheet horizontal en tenant compte du redimensionnement."""
         sheet = pygame.image.load(str(path)).convert_alpha()
         sheet = pygame.transform.scale(
             sheet,
@@ -72,8 +72,8 @@ class Player:
                 int(sheet.get_height() * PLAYER_SCALE),
             ),
         )
-        frame_width = 32
-        frame_height = 32
+        frame_width = int(32 * PLAYER_SCALE)
+        frame_height = int(32 * PLAYER_SCALE)
         frame_count = sheet.get_width() // frame_width
         frames: list[pygame.Surface] = []
         for i in range(frame_count):
