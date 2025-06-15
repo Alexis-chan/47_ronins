@@ -16,6 +16,8 @@ from settings import (
     DISPLAY_HEIGHT,
     SKY_BLUE,
     FPS,
+    BACKGROUND_IMG,
+    MUSIC_FILE,
 )
 from player import Player
 
@@ -26,10 +28,14 @@ def main() -> None:
     # —— Initialisation Pygame ——
     pygame.init()
     pygame.display.set_caption("47 Ronins Chats — Prototype")
+    pygame.mixer.music.load(MUSIC_FILE)
+    pygame.mixer.music.play(-1)
 
     # Surface affichée (agrandie) et surface interne (pixel‑art)
     window = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
     canvas = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT)).convert()
+    background = pygame.image.load(BACKGROUND_IMG).convert()
+    background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
 
     clock = pygame.time.Clock()
 
@@ -50,7 +56,7 @@ def main() -> None:
         player.update(pressed)
 
         # — Rendu sur la surface interne —
-        canvas.fill(SKY_BLUE)
+        canvas.blit(background, (0, 0))
         player.draw(canvas)
 
         # — Upscale + affichage —
