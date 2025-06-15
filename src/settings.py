@@ -21,7 +21,7 @@ PLAYER_RED: tuple[int, int, int] = (222, 68, 55)
 PLAYER_SCALE: float = 0.0625  # 1024px -> 64px environ
 
 # Mode plein écran
-FULLSCREEN: bool = True
+FULLSCREEN: bool = False
 
 # —— Physique du joueur ——
 FPS: int = 60
