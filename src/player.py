@@ -50,8 +50,8 @@ class Player:
 
         # Chargement des animations (walk et jump)
         self.animations = {
-            "walk": self._load_frames(PLAYER_WALK_IMG),
-            "jump": self._load_frames(PLAYER_JUMP_IMG),
+            "walk": self._load_frames(PLAYER_WALK_IMG, num_frames=4),
+            "jump": self._load_frames(PLAYER_JUMP_IMG, num_frames=4),
         }
 
         self.current_image = self.images["stand"]
@@ -62,39 +62,31 @@ class Player:
         self.facing_left = False
         self.jump_sound = pygame.mixer.Sound(str(JUMP_SOUND_FILE))
 
-    def _load_frames(self, path: str) -> list[pygame.Surface]:
-        """Découpe proprement un sprite sheet horizontal en frames redimensionnées."""
+    def _load_frames(self, path: str, num_frames: int = 4) -> list[pygame.Surface]:
+        """Charge un sprite sheet horizontal, extrait les frames et les met à l'échelle."""
         sheet = pygame.image.load(str(path)).convert_alpha()
 
-        # Dimensions d'origine d'une frame dans le sprite sheet
-        original_frame_width = 32
-        original_frame_height = 32
+        # Dimensions originales du sprite sheet
+        original_width, original_height = sheet.get_size()
 
-        # Mise à l’échelle complète du sprite sheet
-        scaled_sheet = pygame.transform.scale(
-            sheet,
-            (
-                int(sheet.get_width() * PLAYER_SCALE),
-                int(sheet.get_height() * PLAYER_SCALE),
-            ),
-        )
+        # Dimensions d'une frame dans le sprite sheet
+        frame_width = original_width // num_frames
+        frame_height = original_height
 
-        # Taille finale des frames après mise à l’échelle
-        frame_width = int(original_frame_width * PLAYER_SCALE)
-        frame_height = int(original_frame_height * PLAYER_SCALE)
+        # Mise à l'échelle du sheet complet
+        scaled_width = int(original_width * PLAYER_SCALE)
+        scaled_height = int(original_height * PLAYER_SCALE)
+        sheet = pygame.transform.scale(sheet, (scaled_width, scaled_height))
 
-        # Calcul du nombre de frames
-        frame_count = scaled_sheet.get_width() // frame_width
+        # Dimensions d'une frame une fois mise à l'échelle
+        scaled_frame_width = scaled_width // num_frames
+        scaled_frame_height = scaled_height
 
         frames: list[pygame.Surface] = []
-        for i in range(frame_count):
-            frame_surface = pygame.Surface((frame_width, frame_height), pygame.SRCALPHA)
-            frame_surface.blit(
-                scaled_sheet,
-                (0, 0),
-                pygame.Rect(i * frame_width, 0, frame_width, frame_height),
-            )
-            frames.append(frame_surface)
+        for i in range(num_frames):
+            frame = pygame.Surface((scaled_frame_width, scaled_frame_height), pygame.SRCALPHA)
+            frame.blit(sheet, (0, 0), (i * scaled_frame_width, 0, scaled_frame_width, scaled_frame_height))
+            frames.append(frame)
 
         return frames
 
