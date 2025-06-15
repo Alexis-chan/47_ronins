@@ -63,28 +63,38 @@ class Player:
         self.jump_sound = pygame.mixer.Sound(str(JUMP_SOUND_FILE))
 
     def _load_frames(self, path: str) -> list[pygame.Surface]:
-        """Découpe un sprite sheet horizontal après redimensionnement."""
+        """Découpe proprement un sprite sheet horizontal en frames redimensionnées."""
         sheet = pygame.image.load(str(path)).convert_alpha()
-        scale = PLAYER_SCALE
-        sheet = pygame.transform.scale(
+
+        # Dimensions d'origine d'une frame dans le sprite sheet
+        original_frame_width = 32
+        original_frame_height = 32
+
+        # Mise à l’échelle complète du sprite sheet
+        scaled_sheet = pygame.transform.scale(
             sheet,
             (
-                int(sheet.get_width() * scale),
-                int(sheet.get_height() * scale),
+                int(sheet.get_width() * PLAYER_SCALE),
+                int(sheet.get_height() * PLAYER_SCALE),
             ),
         )
 
-        # Les dimensions finales des frames après upscale
-        frame_width = int(32 * scale)
-        frame_height = int(32 * scale)
+        # Taille finale des frames après mise à l’échelle
+        frame_width = int(original_frame_width * PLAYER_SCALE)
+        frame_height = int(original_frame_height * PLAYER_SCALE)
 
-        frame_count = sheet.get_width() // frame_width
+        # Calcul du nombre de frames
+        frame_count = scaled_sheet.get_width() // frame_width
+
         frames: list[pygame.Surface] = []
-
         for i in range(frame_count):
-            frame = pygame.Surface((frame_width, frame_height), pygame.SRCALPHA)
-            frame.blit(sheet, (0, 0), (i * frame_width, 0, frame_width, frame_height))
-            frames.append(frame)
+            frame_surface = pygame.Surface((frame_width, frame_height), pygame.SRCALPHA)
+            frame_surface.blit(
+                scaled_sheet,
+                (0, 0),
+                pygame.Rect(i * frame_width, 0, frame_width, frame_height),
+            )
+            frames.append(frame_surface)
 
         return frames
 
