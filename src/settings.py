@@ -20,6 +20,9 @@ PLAYER_RED: tuple[int, int, int] = (222, 68, 55)
 # Taille du joueur (facteur de réduction des sprites d'origine)
 PLAYER_SCALE: float = 0.0625  # 1024px -> 64px environ
 
+# Taille d'une frame dans les sprite sheets avant réduction
+SPRITE_SIZE: int = 256
+
 # Mode plein écran
 FULLSCREEN: bool = False
 
