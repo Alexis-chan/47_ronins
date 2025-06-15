@@ -31,21 +31,29 @@ class Player:
     on_ground: bool = False
     facing_left: bool = False
     images: dict[str, pygame.Surface] | None = None
+    animations: dict[str, list[pygame.Surface]] | None = None
     current_image: pygame.Surface | None = None
+    frame_index: float = 0.0
+    animation_speed: float = 0.2
 
     def __init__(self, pos: tuple[int, int]):
         self.images = {
             "stand": pygame.image.load(str(PLAYER_STAND_IMG)).convert_alpha(),
-            "walk": pygame.image.load(str(PLAYER_WALK_IMG)).convert_alpha(),
-            "jump": pygame.image.load(str(PLAYER_JUMP_IMG)).convert_alpha(),
             "sit": pygame.image.load(str(PLAYER_SIT_IMG)).convert_alpha(),
         }
 
-        # Réduction des sprites pour une taille adaptée à l'écran
+        # Réduction des sprites fixes
         for key, img in self.images.items():
             w = int(img.get_width() * PLAYER_SCALE)
             h = int(img.get_height() * PLAYER_SCALE)
             self.images[key] = pygame.transform.scale(img, (w, h))
+
+        # Chargement des animations (walk et jump)
+        self.animations = {
+            "walk": self._load_frames(PLAYER_WALK_IMG),
+            "jump": self._load_frames(PLAYER_JUMP_IMG),
+        }
+
         self.current_image = self.images["stand"]
         width, height = self.current_image.get_size()
         self.rect = pygame.Rect(pos[0], pos[1], width, height)
@@ -53,6 +61,34 @@ class Player:
         self.on_ground = False
         self.facing_left = False
         self.jump_sound = pygame.mixer.Sound(str(JUMP_SOUND_FILE))
+
+    def _load_frames(self, path: str) -> list[pygame.Surface]:
+        """Découpe un sprite sheet horizontal en frames 32x32."""
+        sheet = pygame.image.load(str(path)).convert_alpha()
+        sheet = pygame.transform.scale(
+            sheet,
+            (
+                int(sheet.get_width() * PLAYER_SCALE),
+                int(sheet.get_height() * PLAYER_SCALE),
+            ),
+        )
+        frame_width = 32
+        frame_height = 32
+        frame_count = sheet.get_width() // frame_width
+        frames: list[pygame.Surface] = []
+        for i in range(frame_count):
+            frame = pygame.Surface((frame_width, frame_height), pygame.SRCALPHA)
+            frame.blit(sheet, (0, 0), (i * frame_width, 0, frame_width, frame_height))
+            frames.append(frame)
+        return frames
+
+    def _animate(self, state: str) -> None:
+        """Met à jour l'image courante d'une animation."""
+        frames = self.animations[state]
+        self.frame_index += self.animation_speed
+        if self.frame_index >= len(frames):
+            self.frame_index = 0
+        self.current_image = frames[int(self.frame_index)]
 
     # ————————————————————
     # Boucle d’update
@@ -97,13 +133,15 @@ class Player:
             self.on_ground = True
 
         if not self.on_ground:
-            self.current_image = self.images["jump"]
+            self._animate("jump")
         elif pressed[pygame.K_DOWN] or pressed[pygame.K_s]:
             self.current_image = self.images["sit"]
+            self.frame_index = 0
         elif self.vel.x != 0:
-            self.current_image = self.images["walk"]
+            self._animate("walk")
         else:
             self.current_image = self.images["stand"]
+            self.frame_index = 0
 
     # ————————————————————
     # Rendu
