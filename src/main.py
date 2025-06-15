@@ -6,6 +6,7 @@ pour un rendu pixel‑perfect sans flou.
 
 from __future__ import annotations
 
+import os
 import sys
 import pygame
 
@@ -25,45 +26,46 @@ from player import Player
 def main() -> None:
     """Lance le jeu."""
 
-    # —— Initialisation Pygame ——
+    # Initialisation
     pygame.init()
-    pygame.display.set_caption("47 Ronins Chats — Prototype")
-    pygame.mixer.music.load(MUSIC_FILE)
-    pygame.mixer.music.play(-1)
+    pygame.display.set_caption("47 Ronins Chats – Prototype")
 
-    # Surface affichée (agrandie) et surface interne (pixel‑art)
+   # Fenêtre et surface de rendu pixelisée
     window = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
     canvas = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT)).convert()
-    background = pygame.image.load(BACKGROUND_IMG).convert()
-    background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
-
     clock = pygame.time.Clock()
 
-    # —— Entités ——
+
+    # Gestion des chemins
+    script_dir = os.path.dirname(__file__)
+    music_path = os.path.join(script_dir, r"../assets/son/Music1.wav")
+    background_path = os.path.join(script_dir, BACKGROUND_IMG)
+
+    # Chargement audio + image
+    pygame.mixer.music.load(music_path)
+    pygame.mixer.music.play(-1)
+
+    background = pygame.image.load(background_path).convert()
+
+ 
+    # Entités
     player = Player((WINDOW_WIDTH // 2, WINDOW_HEIGHT - 20))
 
-    # —— Boucle principale ——
+    # Boucle principale
     running = True
     while running:
-        # — Gestion des événements —
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
 
         pressed = pygame.key.get_pressed()
-
-        # — Mise à jour du monde —
         player.update(pressed)
 
-        # — Rendu sur la surface interne —
         canvas.blit(background, (0, 0))
         player.draw(canvas)
 
-        # — Upscale + affichage —
         pygame.transform.scale(canvas, (DISPLAY_WIDTH, DISPLAY_HEIGHT), window)
         pygame.display.flip()
-
-        # — Limitation FPS —
         clock.tick(FPS)
 
     pygame.quit()
