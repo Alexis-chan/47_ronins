@@ -25,3 +25,12 @@ JUMP_SPEED: float = -6.5   # Impulsion verticale du saut (négatif = vers le hau
 
 # —— Autres ——
 GROUND_Y: int = WINDOW_HEIGHT  # Limite inférieure (sol) pour collision simple
+
+# —— Assets ——
+BACKGROUND_IMG: str = "assets/niveaux/background_forest.png"
+MUSIC_FILE: str = "assets/son/Music1.wav"
+JUMP_SOUND_FILE: str = "assets/son/386529__glennm__breathing_jumping.wav"
+PLAYER_STAND_IMG: str = "assets/personnages/oishi_stand.png"
+PLAYER_WALK_IMG: str = "assets/personnages/oishi_walk.png"
+PLAYER_JUMP_IMG: str = "assets/personnages/oishi_jump.png"
+PLAYER_SIT_IMG: str = "assets/personnages/oishi_sit.png"
