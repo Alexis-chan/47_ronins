@@ -7,6 +7,7 @@ Gestion :
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 import pygame
 from settings import (
     PLAYER_RED,
@@ -26,7 +27,7 @@ from settings import (
 class Player:
     """Joueur contrôlable côté client."""
 
-    rect: pygame.Rect
+    hitbox: pygame.Rect
     vel: pygame.Vector2
     on_ground: bool = False
     facing_left: bool = False
@@ -55,38 +56,25 @@ class Player:
         }
 
         self.current_image = self.images["stand"]
-        width, height = self.current_image.get_size()
-        self.rect = pygame.Rect(pos[0], pos[1], width, height)
+        # Hitbox utilisée pour la physique, indépendante de la taille du sprite
+        self.hitbox = pygame.Rect(pos[0], pos[1], 16, 32)
         self.vel = pygame.Vector2(0, 0)
         self.on_ground = False
         self.facing_left = False
         self.jump_sound = pygame.mixer.Sound(str(JUMP_SOUND_FILE))
 
-    def _load_frames(self, path: str, num_frames: int = 4) -> list[pygame.Surface]:
-        """Charge un sprite sheet horizontal, extrait les frames et les met à l'échelle."""
+    def _load_frames(self, path: Path, num_frames: int = 4) -> list[pygame.Surface]:
+        """Charge le sheet, extrait chaque frame puis la réduit individuellement."""
         sheet = pygame.image.load(str(path)).convert_alpha()
-
-        # Dimensions originales du sprite sheet
-        original_width, original_height = sheet.get_size()
-
-        # Dimensions d'une frame dans le sprite sheet
-        frame_width = original_width // num_frames
-        frame_height = original_height
-
-        # Mise à l'échelle du sheet complet
-        scaled_width = int(original_width * PLAYER_SCALE)
-        scaled_height = int(original_height * PLAYER_SCALE)
-        sheet = pygame.transform.scale(sheet, (scaled_width, scaled_height))
-
-        # Dimensions d'une frame une fois mise à l'échelle
-        scaled_frame_width = scaled_width // num_frames
-        scaled_frame_height = scaled_height
+        fw, fh = sheet.get_width() // num_frames, sheet.get_height()
 
         frames: list[pygame.Surface] = []
         for i in range(num_frames):
-            frame = pygame.Surface((scaled_frame_width, scaled_frame_height), pygame.SRCALPHA)
-            frame.blit(sheet, (0, 0), (i * scaled_frame_width, 0, scaled_frame_width, scaled_frame_height))
-            frames.append(frame)
+            region = sheet.subsurface(pygame.Rect(i * fw, 0, fw, fh)).copy()
+            scale_w = int(fw * PLAYER_SCALE)
+            scale_h = int(fh * PLAYER_SCALE)
+            region = pygame.transform.scale(region, (scale_w, scale_h))
+            frames.append(region)
 
         return frames
 
@@ -129,14 +117,14 @@ class Player:
         self.apply_gravity()
 
         # Déplacement horizontal
-        self.rect.x += int(self.vel.x)
+        self.hitbox.x += int(self.vel.x)
 
         # Déplacement vertical
-        self.rect.y += int(self.vel.y)
+        self.hitbox.y += int(self.vel.y)
 
         # Collision simple avec le sol (bas de la fenêtre)
-        if self.rect.bottom >= WINDOW_HEIGHT:
-            self.rect.bottom = WINDOW_HEIGHT
+        if self.hitbox.bottom >= WINDOW_HEIGHT:
+            self.hitbox.bottom = WINDOW_HEIGHT
             self.vel.y = 0
             self.on_ground = True
 
@@ -160,4 +148,6 @@ class Player:
         image = self.current_image
         if self.facing_left:
             image = pygame.transform.flip(image, True, False)
-        surface.blit(image, self.rect)
+
+        img_rect = image.get_rect(midbottom=self.hitbox.midbottom)
+        surface.blit(image, img_rect)
