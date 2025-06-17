@@ -43,5 +43,6 @@ PLAYER_STAND_IMG: Path = ASSETS_DIR / "personnages" / "oishi_stand.png"
 PLAYER_WALK_IMG: Path = ASSETS_DIR / "personnages" / "oishi_walk.png"
 PLAYER_JUMP_IMG: Path = ASSETS_DIR / "personnages" / "oishi_jump.png"
 PLAYER_SIT_IMG: Path = ASSETS_DIR / "personnages" / "oishi_sit.png"
+PLAYER_ATTACK_IMG: Path = ASSETS_DIR / "personnages" / "Oishi-attac.png"
 
 

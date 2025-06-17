@@ -52,6 +52,13 @@ def main() -> None:
  
     # Entités
     player = Player((WINDOW_WIDTH // 2, WINDOW_HEIGHT - 20))
+    platform = pygame.Rect(WINDOW_WIDTH // 4, WINDOW_HEIGHT - 60, 80, 10)
+
+    # Petit sprite pour les coeurs
+    heart = pygame.Surface((12, 10), pygame.SRCALPHA)
+    pygame.draw.circle(heart, (255, 0, 0), (3, 3), 3)
+    pygame.draw.circle(heart, (255, 0, 0), (9, 3), 3)
+    pygame.draw.polygon(heart, (255, 0, 0), [(0, 5), (12, 5), (6, 9)])
 
     # Boucle principale
     running = True
@@ -59,12 +66,16 @@ def main() -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_f:
+                player.start_attack()
 
         pressed = pygame.key.get_pressed()
-        player.update(pressed)
+        player.update(pressed, [platform])
 
         canvas.blit(background, (0, 0))
+        pygame.draw.rect(canvas, (139, 69, 19), platform)
         player.draw(canvas)
+        player.draw_health(canvas, heart)
 
         pygame.transform.scale(canvas, (DISPLAY_WIDTH, DISPLAY_HEIGHT), window)
         pygame.display.flip()
