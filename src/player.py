@@ -18,6 +18,8 @@ from settings import (
     PLAYER_SCALE,
     PLAYER_STAND_IMG,
     PLAYER_WALK_IMG,
+    PLAYER_JUMP_IMG,
+    PLAYER_ATTACK_IMG,
     PLAYER_SIT_IMG,
     JUMP_SOUND_FILE,
 )
@@ -35,6 +37,8 @@ class Player:
     current_image: pygame.Surface | None = None
     frame_index: float = 0.0
     animation_speed: float = 0.2
+    is_attacking: bool = False
+    health: int = 5
 
     def __init__(self, pos: tuple[int, int]):
         self.images = {
@@ -48,9 +52,11 @@ class Player:
             h = int(img.get_height() * PLAYER_SCALE)
             self.images[key] = pygame.transform.scale(img, (w, h))
 
-        # Chargement de l'animation de marche uniquement
+        # Chargement des animations
         self.animations = {
             "walk": self._load_frames(PLAYER_WALK_IMG, num_frames=4),
+            "jump": self._load_frames(PLAYER_JUMP_IMG, num_frames=4),
+            "attack": self._load_frames(PLAYER_ATTACK_IMG, num_frames=4),
         }
 
         self.current_image = self.images["stand"]
@@ -60,6 +66,8 @@ class Player:
         self.on_ground = False
         self.facing_left = False
         self.jump_sound = pygame.mixer.Sound(str(JUMP_SOUND_FILE))
+        self.is_attacking = False
+        self.health = 5
 
     def _load_frames(self, path: Path, num_frames: int = 4) -> list[pygame.Surface]:
         """Charge le sheet, extrait chaque frame puis la réduit individuellement."""
@@ -76,12 +84,16 @@ class Player:
 
         return frames
 
-    def _animate(self, state: str) -> None:
+    def _animate(self, state: str, loop: bool = True) -> None:
         """Met à jour l'image courante d'une animation."""
         frames = self.animations[state]
         self.frame_index += self.animation_speed
         if self.frame_index >= len(frames):
-            self.frame_index = 0
+            if loop:
+                self.frame_index = 0
+            else:
+                self.frame_index = len(frames) - 1
+                self.is_attacking = False
         self.current_image = frames[int(self.frame_index)]
 
     # ————————————————————
@@ -109,13 +121,25 @@ class Player:
         if not self.on_ground:
             self.vel.y += GRAVITY
 
-    def update(self, pressed: pygame.key.ScancodeWrapper) -> None:
+    def start_attack(self) -> None:
+        """Déclenche l'animation d'attaque."""
+        if not self.is_attacking:
+            self.is_attacking = True
+            self.frame_index = 0
+
+    def update(
+        self,
+        pressed: pygame.key.ScancodeWrapper,
+        platforms: list[pygame.Rect] | None = None,
+    ) -> None:
         """Met à jour la position et l’état du joueur pour la frame courante."""
         self.handle_input(pressed)
         self.apply_gravity()
 
         # Déplacement horizontal
         self.hitbox.x += int(self.vel.x)
+        if self.hitbox.left < 0:
+            self.hitbox.left = 0
 
         # Déplacement vertical
         self.hitbox.y += int(self.vel.y)
@@ -126,10 +150,22 @@ class Player:
             self.vel.y = 0
             self.on_ground = True
 
-        if not self.on_ground:
-            # Pas d'animation spécifique en l'air
-            self.current_image = self.images["stand"]
-            self.frame_index = 0
+        if platforms:
+            for plat in platforms:
+                prev_bottom = self.hitbox.bottom - int(self.vel.y)
+                if (
+                    self.hitbox.colliderect(plat)
+                    and prev_bottom <= plat.top
+                    and self.vel.y >= 0
+                ):
+                    self.hitbox.bottom = plat.top
+                    self.vel.y = 0
+                    self.on_ground = True
+
+        if self.is_attacking:
+            self._animate("attack", loop=False)
+        elif not self.on_ground:
+            self._animate("jump")
         elif pressed[pygame.K_DOWN] or pressed[pygame.K_s]:
             self.current_image = self.images["sit"]
             self.frame_index = 0
@@ -151,3 +187,9 @@ class Player:
 
         img_rect = image.get_rect(midbottom=self.hitbox.midbottom)
         surface.blit(image, img_rect)
+
+    def draw_health(self, surface: pygame.Surface, heart: pygame.Surface) -> None:
+        """Dessine les coeurs de vie en haut à gauche."""
+        for i in range(self.health):
+            x = 5 + i * (heart.get_width() + 2)
+            surface.blit(heart, (x, 5))
