@@ -18,7 +18,6 @@ from settings import (
     PLAYER_SCALE,
     PLAYER_STAND_IMG,
     PLAYER_WALK_IMG,
-    PLAYER_JUMP_IMG,
     PLAYER_SIT_IMG,
     JUMP_SOUND_FILE,
 )
@@ -49,10 +48,9 @@ class Player:
             h = int(img.get_height() * PLAYER_SCALE)
             self.images[key] = pygame.transform.scale(img, (w, h))
 
-        # Chargement des animations (walk et jump)
+        # Chargement de l'animation de marche uniquement
         self.animations = {
             "walk": self._load_frames(PLAYER_WALK_IMG, num_frames=4),
-            "jump": self._load_frames(PLAYER_JUMP_IMG, num_frames=4),
         }
 
         self.current_image = self.images["stand"]
@@ -129,7 +127,9 @@ class Player:
             self.on_ground = True
 
         if not self.on_ground:
-            self._animate("jump")
+            # Pas d'animation spécifique en l'air
+            self.current_image = self.images["stand"]
+            self.frame_index = 0
         elif pressed[pygame.K_DOWN] or pressed[pygame.K_s]:
             self.current_image = self.images["sit"]
             self.frame_index = 0
