@@ -37,12 +37,15 @@ BASE_DIR: Path = Path(__file__).resolve().parent.parent
 ASSETS_DIR: Path = BASE_DIR / "assets"
 
 BACKGROUND_IMG: Path = ASSETS_DIR / "niveaux" / "background_forest.png"
-MUSIC_FILE: Path = ASSETS_DIR / "son" / "Music1.wav"
-JUMP_SOUND_FILE: Path = ASSETS_DIR / "son" / "386529__glennm__breathing_jumping.wav"
-PLAYER_STAND_IMG: Path = ASSETS_DIR / "personnages" / "oishi_stand.png"
-PLAYER_WALK_IMG: Path = ASSETS_DIR / "personnages" / "oishi_walk.png"
-PLAYER_JUMP_IMG: Path = ASSETS_DIR / "personnages" / "oishi_jump.png"
-PLAYER_SIT_IMG: Path = ASSETS_DIR / "personnages" / "oishi_sit.png"
-PLAYER_ATTACK_IMG: Path = ASSETS_DIR / "personnages" / "Oishi-attac.png"
+TILESET_IMG: Path = ASSETS_DIR / "niveaux" / "tileset_forest.png"
+MUSIC_FILE: Path = ASSETS_DIR / "son" / "music_stage_1.wav"
+JUMP_SOUND_FILE: Path = ASSETS_DIR / "son" / "son_saut.wav"
+
+CHARACTER_DIR: Path = ASSETS_DIR / "personnages"
+OISHI_DIR: Path = CHARACTER_DIR / "1_Oishi_Samourai"
+KOJI_DIR: Path = CHARACTER_DIR / "2_Koji_Karateka"
+ENEMY_DIR: Path = CHARACTER_DIR / "enemy"
+
+HEART_IMG: Path = ASSETS_DIR / "ui" / "ChatGPT Image 18 juin 2025, 18_58_17.png"
 
 
