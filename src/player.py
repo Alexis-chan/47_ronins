@@ -34,8 +34,13 @@ class Player:
     is_attacking: bool = False
     health: int = 5
 
-    def __init__(self, pos: tuple[int, int], asset_paths: dict[str, Path]):
+    attack_type: str = ""
+    name: str = "player"
+
+    def __init__(self, pos: tuple[int, int], asset_paths: dict[str, Path], name: str = "player"):
         """Initialise le joueur avec les sprites du personnage choisi."""
+
+        self.name = name
 
         self.images = {}
         if "stand" in asset_paths:
@@ -55,7 +60,7 @@ class Player:
 
         # Chargement des animations
         self.animations = {}
-        for key in ("walk", "jump", "attack"):
+        for key in ("walk", "jump", "attack", "kick", "jumpkick"):
             if key in asset_paths:
                 self.animations[key] = self._load_frames(asset_paths[key])
 
@@ -67,7 +72,8 @@ class Player:
         self.facing_left = False
         self.jump_sound = pygame.mixer.Sound(str(JUMP_SOUND_FILE))
         self.is_attacking = False
-        self.health = 5
+        self.attack_type = ""
+        self.health = 6 if name.lower() == "koji" else 5
 
     def _load_frames(self, path: Path) -> list[pygame.Surface]:
         """Charge un sprite sheet en détectant automatiquement son découpage."""
@@ -111,6 +117,32 @@ class Player:
                 self.is_attacking = False
         self.current_image = frames[int(self.frame_index)]
 
+    def get_attack_rect(self) -> pygame.Rect | None:
+        """Retourne la zone d'attaque active."""
+        if not self.is_attacking:
+            return None
+        width = 16
+        height = self.hitbox.height // 2
+        y = self.hitbox.centery - height // 2
+        if self.facing_left:
+            x = self.hitbox.left - width
+        else:
+            x = self.hitbox.right
+        return pygame.Rect(x, y, width, height)
+
+    def attack_damage(self) -> int:
+        """Dégâts infligés par l'attaque courante."""
+        if self.attack_type == "kick":
+            return 2
+        if self.name.lower() == "oishi":
+            return 3
+        # coup de poing par défaut
+        return 1
+
+    def take_damage(self, amount: int) -> None:
+        """Réduit la vie du joueur."""
+        self.health = max(0, self.health - amount)
+
     # ————————————————————
     # Boucle d’update
     # ————————————————————
@@ -138,10 +170,28 @@ class Player:
             self.vel.y += GRAVITY
 
     def start_attack(self) -> None:
-        """Déclenche l'animation d'attaque."""
+        """Déclenche l'animation d'attaque (poing ou arme)."""
         if not self.is_attacking:
             self.is_attacking = True
             self.frame_index = 0
+            if self.name.lower() == "oishi":
+                self.attack_type = "attack"
+            else:
+                self.attack_type = "attack"
+            if not self.on_ground and "jumpkick" in self.animations:
+                self.attack_type = "jumpkick"
+            if self.name.lower() == "koji" and self.on_ground:
+                # avance légèrement lors du coup de poing
+                self.hitbox.x += 3 if not self.facing_left else -3
+
+    def start_kick(self) -> None:
+        """Déclenche une attaque de type coup de pied."""
+        if not self.is_attacking and "kick" in self.animations:
+            self.is_attacking = True
+            self.frame_index = 0
+            self.attack_type = "kick"
+            if not self.on_ground and "jumpkick" in self.animations:
+                self.attack_type = "jumpkick"
 
     def update(
         self,
@@ -157,12 +207,22 @@ class Player:
         prev_on_ground = self.on_ground
 
         self.handle_input(pressed, controls)
-        self.apply_gravity()
 
         # Déplacement horizontal
         self.hitbox.x += int(self.vel.x)
         if self.hitbox.left < 0:
             self.hitbox.left = 0
+
+        if self.on_ground and platforms:
+            on_plat = False
+            for plat in platforms:
+                if self.hitbox.bottom == plat.top and self.hitbox.colliderect(plat):
+                    on_plat = True
+                    break
+            if not on_plat and self.hitbox.bottom < WINDOW_HEIGHT:
+                self.on_ground = False
+
+        self.apply_gravity()
 
         # Déplacement vertical
         self.hitbox.y += int(self.vel.y)
@@ -193,7 +253,11 @@ class Player:
                 self.current_image = jump_frames[-1]
 
         if self.is_attacking:
-            self._animate("attack", loop=False)
+            state = self.attack_type if self.attack_type else "attack"
+            if state in self.animations:
+                self._animate(state, loop=False)
+            else:
+                self.is_attacking = False
         elif not self.on_ground:
             if self.frame_index == 0 and self.animations.get("jump"):
                 # Première frame déjà affichée, passer à la suivante
