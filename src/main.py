@@ -63,7 +63,11 @@ def main() -> None:
     oishi_assets = {
         "stand": OISHI_DIR / "oishi_stand.png",
         "walk": OISHI_DIR / "oishi_walk.png",
-        "jump": OISHI_DIR / "oishi_jump.png",
+        "jump": [
+            OISHI_DIR / "Oishi_jump_start.png",
+            OISHI_DIR / "Oishi_jump_midair.png",
+            OISHI_DIR / "Oishi-jump-landing.png",
+        ],
         "sit": OISHI_DIR / "oishi_sit.png",
         "attack": OISHI_DIR / "Oishi-attac.png",
     }
@@ -71,7 +75,11 @@ def main() -> None:
     koji_assets = {
         "stand": KOJI_DIR / "Koji_stand.png",
         "walk": KOJI_DIR / "ChatGPT Image 18 juin 2025, 18_50_38 (1).png",
-        "jump": KOJI_DIR / "Koji_jump.png",
+        "jump": [
+            KOJI_DIR / "Koji_jump_start.png",
+            KOJI_DIR / "Koji_jump_midair.png",
+            KOJI_DIR / "Koji_jump_landing.png",
+        ],
         "attack": KOJI_DIR / "Koji_punch.png",
         "kick": KOJI_DIR / "Koji_kick.png",
         "jumpkick": KOJI_DIR / "Koji_jumpkick.png",
@@ -83,12 +91,12 @@ def main() -> None:
     ]
     current_player = 0
 
-    enemy = Enemy((WINDOW_WIDTH - 40, WINDOW_HEIGHT - 20), ENEMY_DIR / "Tengu_stand.png")
+    enemy = Enemy((WINDOW_WIDTH - 40, WINDOW_HEIGHT), ENEMY_DIR / "Tengu_stand.png")
 
     platform = pygame.Rect(WINDOW_WIDTH // 4, WINDOW_HEIGHT - 40, 80, 10)
 
     heart_img = pygame.image.load(str(HEART_IMG)).convert_alpha()
-    heart_scale = int(heart_img.get_width() * 0.035)
+    heart_scale = int(heart_img.get_width() * 0.012)
     heart = pygame.transform.scale(heart_img, (heart_scale, heart_scale))
 
     # Boucle principale
@@ -155,17 +163,18 @@ def main() -> None:
         # Gestion des collisions avec l'ennemi
         attack_rect = players[current_player].get_attack_rect()
         enemy_hit = False
-        if attack_rect and enemy.hitbox.colliderect(attack_rect):
+        if enemy.health > 0 and attack_rect and enemy.hitbox.colliderect(attack_rect):
             enemy.take_damage(players[current_player].attack_damage())
             enemy_hit = True
-        if players[current_player].hitbox.colliderect(enemy.hitbox) and not enemy_hit:
+        if enemy.health > 0 and players[current_player].hitbox.colliderect(enemy.hitbox) and not enemy_hit:
             players[current_player].take_damage(1)
 
         canvas.blit(background, (0, 0))
         for x in range(0, WINDOW_WIDTH, tile.get_width()):
             canvas.blit(tile, (x, WINDOW_HEIGHT - tile.get_height()))
         pygame.draw.rect(canvas, (139, 69, 19), platform)
-        enemy.draw(canvas)
+        if enemy.health > 0:
+            enemy.draw(canvas)
         players[current_player].draw(canvas)
         players[current_player].draw_health(canvas, heart)
 

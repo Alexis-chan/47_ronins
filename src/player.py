@@ -33,6 +33,7 @@ class Player:
     animation_speed: float = 0.2
     is_attacking: bool = False
     health: int = 5
+    jump_phase: str = "stand"
 
     attack_type: str = ""
     name: str = "player"
@@ -74,11 +75,20 @@ class Player:
         self.is_attacking = False
         self.attack_type = ""
         self.health = 6 if name.lower() == "koji" else 5
+        self.jump_phase = "stand"
 
-    def _load_frames(self, path: Path) -> list[pygame.Surface]:
-        """Charge un sprite sheet en détectant automatiquement son découpage."""
+    def _load_frames(self, paths: Path | list[Path]) -> list[pygame.Surface]:
+        """Charge des frames depuis une feuille de sprites ou plusieurs images."""
 
-        sheet = pygame.image.load(str(path)).convert_alpha()
+        if isinstance(paths, (list, tuple)):
+            frames: list[pygame.Surface] = []
+            for p in paths:
+                img = pygame.image.load(str(p)).convert_alpha()
+                scale = int(img.get_width() * PLAYER_SCALE)
+                frames.append(pygame.transform.scale(img, (scale, scale)))
+            return frames
+
+        sheet = pygame.image.load(str(paths)).convert_alpha()
         w, h = sheet.get_width(), sheet.get_height()
 
         if w >= h:
@@ -162,6 +172,7 @@ class Player:
         if pressed[controls.get("jump", pygame.K_SPACE)] and self.on_ground:
             self.vel.y = JUMP_SPEED
             self.on_ground = False
+            self.jump_phase = "start"
             self.jump_sound.play()
 
     def apply_gravity(self) -> None:
@@ -247,10 +258,7 @@ class Player:
 
         just_landed = not prev_on_ground and self.on_ground
         if just_landed:
-            jump_frames = self.animations.get("jump")
-            if jump_frames:
-                self.frame_index = len(jump_frames) - 1
-                self.current_image = jump_frames[-1]
+            self.jump_phase = "landing"
 
         if self.is_attacking:
             state = self.attack_type if self.attack_type else "attack"
@@ -258,15 +266,20 @@ class Player:
                 self._animate(state, loop=False)
             else:
                 self.is_attacking = False
+        elif self.jump_phase == "start":
+            frames = self.animations.get("jump")
+            if frames:
+                self.current_image = frames[0]
+            self.jump_phase = "midair"
         elif not self.on_ground:
-            if self.frame_index == 0 and self.animations.get("jump"):
-                # Première frame déjà affichée, passer à la suivante
-                self.frame_index = 1
-            if self.animations.get("jump"):
-                self._animate("jump", loop=True)
-        elif just_landed:
-            # Garder l'image d'atterrissage une frame
-            pass
+            frames = self.animations.get("jump")
+            if frames:
+                self.current_image = frames[1]
+        elif self.jump_phase == "landing":
+            frames = self.animations.get("jump")
+            if frames:
+                self.current_image = frames[2]
+            self.jump_phase = "stand"
         elif pressed[controls.get("down", pygame.K_DOWN)]:
             if "sit" in self.images:
                 self.current_image = self.images["sit"]
@@ -293,7 +306,11 @@ class Player:
         surface.blit(image, img_rect)
 
     def draw_health(self, surface: pygame.Surface, heart: pygame.Surface) -> None:
-        """Dessine les coeurs de vie en haut à gauche."""
+        """Dessine les coeurs de vie en haut à gauche sur deux lignes max."""
+        max_per_row = 10
         for i in range(self.health):
-            x = 5 + i * (heart.get_width() + 2)
-            surface.blit(heart, (x, 5))
+            row = i // max_per_row
+            col = i % max_per_row
+            x = 5 + col * (heart.get_width() + 2)
+            y = 5 + row * (heart.get_height() + 2)
+            surface.blit(heart, (x, y))
