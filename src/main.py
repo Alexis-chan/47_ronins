@@ -73,11 +73,13 @@ def main() -> None:
         "walk": KOJI_DIR / "ChatGPT Image 18 juin 2025, 18_50_38 (1).png",
         "jump": KOJI_DIR / "Koji_jump.png",
         "attack": KOJI_DIR / "Koji_punch.png",
+        "kick": KOJI_DIR / "Koji_kick.png",
+        "jumpkick": KOJI_DIR / "Koji_jumpkick.png",
     }
 
     players = [
-        Player((WINDOW_WIDTH // 2, WINDOW_HEIGHT - 20), oishi_assets),
-        Player((WINDOW_WIDTH // 2, WINDOW_HEIGHT - 20), koji_assets),
+        Player((WINDOW_WIDTH // 2, WINDOW_HEIGHT - 20), oishi_assets, name="Oishi"),
+        Player((WINDOW_WIDTH // 2, WINDOW_HEIGHT - 20), koji_assets, name="Koji"),
     ]
     current_player = 0
 
@@ -86,7 +88,7 @@ def main() -> None:
     platform = pygame.Rect(WINDOW_WIDTH // 4, WINDOW_HEIGHT - 40, 80, 10)
 
     heart_img = pygame.image.load(str(HEART_IMG)).convert_alpha()
-    heart_scale = int(heart_img.get_width() * 0.05)
+    heart_scale = int(heart_img.get_width() * 0.035)
     heart = pygame.transform.scale(heart_img, (heart_scale, heart_scale))
 
     # Boucle principale
@@ -95,6 +97,7 @@ def main() -> None:
         "right": pygame.K_RIGHT,
         "jump": pygame.K_SPACE,
         "attack": pygame.K_f,
+        "kick": pygame.K_d,
         "switch": pygame.K_a,
         "down": pygame.K_DOWN,
     }
@@ -138,6 +141,8 @@ def main() -> None:
                     waiting_key = None
                 elif event.key == controls.get("attack") and not menu_open:
                     players[current_player].start_attack()
+                elif event.key == controls.get("kick") and not menu_open:
+                    players[current_player].start_kick()
                 elif event.key == controls.get("switch") and not menu_open:
                     old = players[current_player]
                     current_player = (current_player + 1) % len(players)
@@ -146,6 +151,15 @@ def main() -> None:
         players[current_player].jump_sound.set_volume(sfx_volume)
         pressed = pygame.key.get_pressed()
         players[current_player].update(pressed, [platform], controls)
+
+        # Gestion des collisions avec l'ennemi
+        attack_rect = players[current_player].get_attack_rect()
+        enemy_hit = False
+        if attack_rect and enemy.hitbox.colliderect(attack_rect):
+            enemy.take_damage(players[current_player].attack_damage())
+            enemy_hit = True
+        if players[current_player].hitbox.colliderect(enemy.hitbox) and not enemy_hit:
+            players[current_player].take_damage(1)
 
         canvas.blit(background, (0, 0))
         for x in range(0, WINDOW_WIDTH, tile.get_width()):
@@ -159,17 +173,18 @@ def main() -> None:
             overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 180))
             canvas.blit(overlay, (0, 0))
-            font = pygame.font.SysFont(None, 12)
+            font = pygame.font.Font(None, 20)
             y = 40
             for line in [
                 "Menu - ESC pour fermer",
                 "M/P : volume musique",
                 "S/D : volume effets",
                 "L/R/J/F/C : changer commandes (gauche/droite/saut/attaque/changer)",
+                "Touche D : coup de pied",
             ]:
                 txt = font.render(line, True, (255, 255, 255))
                 canvas.blit(txt, (20, y))
-                y += 12
+                y += 22
             if waiting_key:
                 txt = font.render("Appuyez sur une touche...", True, (255, 255, 0))
                 canvas.blit(txt, (20, y))
