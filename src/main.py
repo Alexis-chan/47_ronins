@@ -72,9 +72,12 @@ def main() -> None:
         "attack": OISHI_DIR / "Oishi-attac.png",
     }
 
+    # L'ancien fichier d'animation de marche de Koji a été supprimé lors d'un
+    # nettoyage des assets. Pour éviter une erreur au chargement, on réutilise
+    # l'image de base comme animation de marche unique.
     koji_assets = {
         "stand": KOJI_DIR / "Koji_stand.png",
-        "walk": KOJI_DIR / "ChatGPT Image 18 juin 2025, 18_50_38 (1).png",
+        "walk": KOJI_DIR / "Koji_stand.png",
         "jump": [
             KOJI_DIR / "Koji_jump_start.png",
             KOJI_DIR / "Koji_jump_midair.png",
