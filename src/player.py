@@ -34,6 +34,8 @@ class Player:
     is_attacking: bool = False
     health: int = 5
     jump_phase: str = "stand"
+    invincible_time: int = 0
+    invincible: bool = False
 
     attack_type: str = ""
     name: str = "player"
@@ -51,6 +53,10 @@ class Player:
         if "sit" in asset_paths:
             self.images["sit"] = pygame.image.load(
                 str(asset_paths["sit"])
+            ).convert_alpha()
+        if "hurt" in asset_paths:
+            self.images["hurt"] = pygame.image.load(
+                str(asset_paths["hurt"])
             ).convert_alpha()
 
         # Réduction des sprites fixes
@@ -76,6 +82,8 @@ class Player:
         self.attack_type = ""
         self.health = 6 if name.lower() == "koji" else 5
         self.jump_phase = "stand"
+        self.invincible_time = 0
+        self.invincible = False
 
     def _load_frames(self, paths: Path | list[Path]) -> list[pygame.Surface]:
         """Charge des frames depuis une feuille de sprites ou plusieurs images."""
@@ -149,9 +157,15 @@ class Player:
         # coup de poing par défaut
         return 1
 
-    def take_damage(self, amount: int) -> None:
-        """Réduit la vie du joueur."""
+    def take_damage(self, amount: int, from_left: bool = True) -> None:
+        """Réduit la vie du joueur en appliquant un knockback."""
+        if self.invincible_time > 0 or self.invincible:
+            return
         self.health = max(0, self.health - amount)
+        self.invincible_time = 60  # ~1 seconde à 60 FPS
+        self.vel.x = 2 if from_left else -2
+        if "hurt" in self.images:
+            self.current_image = self.images["hurt"]
 
     # ————————————————————
     # Boucle d’update
@@ -185,6 +199,7 @@ class Player:
         if not self.is_attacking:
             self.is_attacking = True
             self.frame_index = 0
+            self.invincible = True
             if self.name.lower() == "oishi":
                 self.attack_type = "attack"
             else:
@@ -200,6 +215,7 @@ class Player:
         if not self.is_attacking and "kick" in self.animations:
             self.is_attacking = True
             self.frame_index = 0
+            self.invincible = True
             self.attack_type = "kick"
             if not self.on_ground and "jumpkick" in self.animations:
                 self.attack_type = "jumpkick"
@@ -216,6 +232,9 @@ class Player:
             controls = {}
 
         prev_on_ground = self.on_ground
+
+        if self.invincible_time > 0:
+            self.invincible_time -= 1
 
         self.handle_input(pressed, controls)
 
@@ -258,14 +277,26 @@ class Player:
 
         just_landed = not prev_on_ground and self.on_ground
         if just_landed:
-            self.jump_phase = "landing"
+            if "stand" in self.images:
+                self.current_image = self.images["stand"]
+            self.jump_phase = "stand"
 
         if self.is_attacking:
             state = self.attack_type if self.attack_type else "attack"
             if state in self.animations:
-                self._animate(state, loop=False)
+                if (
+                    state == "jumpkick"
+                    and pressed[controls.get("kick", pygame.K_d)]
+                    and int(self.frame_index) >= len(self.animations[state]) - 1
+                ):
+                    self.current_image = self.animations[state][-1]
+                else:
+                    self._animate(state, loop=False)
+                if not self.is_attacking:
+                    self.invincible = False
             else:
                 self.is_attacking = False
+                self.invincible = False
         elif self.jump_phase == "start":
             frames = self.animations.get("jump")
             if frames:
@@ -275,11 +306,6 @@ class Player:
             frames = self.animations.get("jump")
             if frames:
                 self.current_image = frames[1]
-        elif self.jump_phase == "landing":
-            frames = self.animations.get("jump")
-            if frames:
-                self.current_image = frames[2]
-            self.jump_phase = "stand"
         elif pressed[controls.get("down", pygame.K_DOWN)]:
             if "sit" in self.images:
                 self.current_image = self.images["sit"]
@@ -291,6 +317,9 @@ class Player:
             if "stand" in self.images:
                 self.current_image = self.images["stand"]
             self.frame_index = 0
+
+        if self.invincible_time <= 0 and not self.is_attacking:
+            self.invincible = False
 
     # ————————————————————
     # Rendu

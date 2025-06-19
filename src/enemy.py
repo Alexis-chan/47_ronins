@@ -9,9 +9,12 @@ from settings import PLAYER_SCALE
 class Enemy:
     pos: tuple[int, int]
     image_path: Path
+    attack_path: Path | None = None
     health: int = 1
 
     hitbox: pygame.Rect | None = None
+    attacking: bool = False
+    attack_timer: int = 0
 
     def __post_init__(self) -> None:
         img = pygame.image.load(str(self.image_path)).convert_alpha()
@@ -19,9 +22,37 @@ class Enemy:
         self.image = pygame.transform.scale(img, (scale, scale))
         self.rect = self.image.get_rect(midbottom=self.pos)
         self.hitbox = self.rect.copy()
+        if self.attack_path is not None:
+            aimg = pygame.image.load(str(self.attack_path)).convert_alpha()
+            self.attack_image = pygame.transform.scale(aimg, (scale, scale))
+        else:
+            self.attack_image = self.image
 
     def draw(self, surface: pygame.Surface) -> None:
-        surface.blit(self.image, self.rect)
+        img = self.attack_image if self.attacking else self.image
+        surface.blit(img, self.rect)
 
     def take_damage(self, amount: int) -> None:
         self.health = max(0, self.health - amount)
+
+    def update(self, player_rect: pygame.Rect) -> None:
+        if self.health <= 0:
+            return
+        if self.attack_timer > 0:
+            self.attack_timer -= 1
+            if self.attack_timer == 0:
+                self.attacking = False
+            return
+        # Déclenche l'attaque si le joueur est à portée
+        if abs(player_rect.centerx - self.hitbox.centerx) < 40 and abs(player_rect.centery - self.hitbox.centery) < self.hitbox.height:
+            self.attacking = True
+            self.attack_timer = 20
+
+    def get_attack_rect(self) -> pygame.Rect | None:
+        if not self.attacking or self.attack_timer > 10:
+            return None
+        width = 16
+        height = self.hitbox.height // 2
+        y = self.hitbox.centery - height // 2
+        x = self.hitbox.left - width
+        return pygame.Rect(x, y, width, height)

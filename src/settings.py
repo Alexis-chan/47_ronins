@@ -38,6 +38,7 @@ ASSETS_DIR: Path = BASE_DIR / "assets"
 
 BACKGROUND_IMG: Path = ASSETS_DIR / "niveaux" / "background_forest.png"
 TILESET_IMG: Path = ASSETS_DIR / "niveaux" / "tileset_forest.png"
+PLATFORM_TILESET_IMG: Path = ASSETS_DIR / "niveaux" / "tileset_plateform_1.png"
 MUSIC_FILE: Path = ASSETS_DIR / "son" / "music_stage_1.wav"
 JUMP_SOUND_FILE: Path = ASSETS_DIR / "son" / "son_saut.wav"
 
@@ -46,6 +47,7 @@ OISHI_DIR: Path = CHARACTER_DIR / "1_Oishi_Samourai"
 KOJI_DIR: Path = CHARACTER_DIR / "2_Koji_Karateka"
 ENEMY_DIR: Path = CHARACTER_DIR / "enemy"
 
-HEART_IMG: Path = ASSETS_DIR / "ui" / "ChatGPT Image 18 juin 2025, 18_58_17.png"
+HEART_IMG: Path = ASSETS_DIR / "ui" / "Heart_lifepoint.png"
+SNES_IMG: Path = ASSETS_DIR / "ui" / "Manette_SNES.png"
 
 
