@@ -18,12 +18,14 @@ from settings import (
     FPS,
     BACKGROUND_IMG,
     TILESET_IMG,
+    PLATFORM_TILESET_IMG,
     MUSIC_FILE,
     FULLSCREEN,
     OISHI_DIR,
     KOJI_DIR,
     ENEMY_DIR,
     HEART_IMG,
+    SNES_IMG,
 )
 from player import Player
 from enemy import Enemy
@@ -57,6 +59,8 @@ def main() -> None:
     tileset = pygame.image.load(str(TILESET_IMG)).convert_alpha()
     tile = tileset.subsurface(pygame.Rect(0, 0, 32, 32))
     tile = pygame.transform.scale(tile, (32, 32))
+    plat_tileset = pygame.image.load(str(PLATFORM_TILESET_IMG)).convert_alpha()
+    platform_img = pygame.transform.scale(plat_tileset, (80, 10))
 
  
     # Entités
@@ -70,6 +74,7 @@ def main() -> None:
         ],
         "sit": OISHI_DIR / "oishi_sit.png",
         "attack": OISHI_DIR / "Oishi-attac.png",
+        "hurt": OISHI_DIR / "Oishi_hurt.png",
     }
 
     # L'ancien fichier d'animation de marche de Koji a été supprimé lors d'un
@@ -86,6 +91,7 @@ def main() -> None:
         "attack": KOJI_DIR / "Koji_punch.png",
         "kick": KOJI_DIR / "Koji_kick.png",
         "jumpkick": KOJI_DIR / "Koji_jumpkick.png",
+        "hurt": KOJI_DIR / "Koji_hurt.png",
     }
 
     players = [
@@ -94,7 +100,11 @@ def main() -> None:
     ]
     current_player = 0
 
-    enemy = Enemy((WINDOW_WIDTH - 40, WINDOW_HEIGHT), ENEMY_DIR / "Tengu_stand.png")
+    enemy = Enemy(
+        (WINDOW_WIDTH - 40, WINDOW_HEIGHT),
+        ENEMY_DIR / "Tengu_stand.png",
+        ENEMY_DIR / "Tengu_attac.png",
+    )
 
     platform = pygame.Rect(WINDOW_WIDTH // 4, WINDOW_HEIGHT - 40, 80, 10)
 
@@ -104,16 +114,19 @@ def main() -> None:
 
     # Boucle principale
     controls = {
+        "up": pygame.K_UP,
+        "down": pygame.K_DOWN,
         "left": pygame.K_LEFT,
         "right": pygame.K_RIGHT,
-        "jump": pygame.K_SPACE,
-        "attack": pygame.K_f,
-        "kick": pygame.K_d,
-        "switch": pygame.K_a,
-        "down": pygame.K_DOWN,
+        "attack": pygame.K_d,  # A
+        "kick": pygame.K_f,    # B
+        "special": pygame.K_s,  # X
+        "jump": pygame.K_SPACE,  # Y
+        "next": pygame.K_e,   # R
+        "prev": pygame.K_r,   # L
     }
 
-    menu_open = False
+    menu_open = True
     waiting_key: str | None = None
     music_volume = 1.0
     sfx_volume = 1.0
@@ -145,8 +158,14 @@ def main() -> None:
                         waiting_key = "jump"
                     elif event.key == pygame.K_f:
                         waiting_key = "attack"
-                    elif event.key == pygame.K_c:
-                        waiting_key = "switch"
+                    elif event.key == pygame.K_d:
+                        waiting_key = "kick"
+                    elif event.key == pygame.K_x:
+                        waiting_key = "special"
+                    elif event.key == pygame.K_e:
+                        waiting_key = "next"
+                    elif event.key == pygame.K_q:
+                        waiting_key = "prev"
                 elif menu_open and waiting_key:
                     controls[waiting_key] = event.key
                     waiting_key = None
@@ -154,14 +173,19 @@ def main() -> None:
                     players[current_player].start_attack()
                 elif event.key == controls.get("kick") and not menu_open:
                     players[current_player].start_kick()
-                elif event.key == controls.get("switch") and not menu_open:
+                elif event.key == controls.get("next") and not menu_open:
                     old = players[current_player]
                     current_player = (current_player + 1) % len(players)
+                    players[current_player].hitbox.midbottom = old.hitbox.midbottom
+                elif event.key == controls.get("prev") and not menu_open:
+                    old = players[current_player]
+                    current_player = (current_player - 1) % len(players)
                     players[current_player].hitbox.midbottom = old.hitbox.midbottom
 
         players[current_player].jump_sound.set_volume(sfx_volume)
         pressed = pygame.key.get_pressed()
         players[current_player].update(pressed, [platform], controls)
+        enemy.update(players[current_player].hitbox)
 
         # Gestion des collisions avec l'ennemi
         attack_rect = players[current_player].get_attack_rect()
@@ -169,13 +193,22 @@ def main() -> None:
         if enemy.health > 0 and attack_rect and enemy.hitbox.colliderect(attack_rect):
             enemy.take_damage(players[current_player].attack_damage())
             enemy_hit = True
-        if enemy.health > 0 and players[current_player].hitbox.colliderect(enemy.hitbox) and not enemy_hit:
-            players[current_player].take_damage(1)
+        enemy_attack = enemy.get_attack_rect()
+        if (
+            enemy.health > 0
+            and enemy_attack
+            and enemy_attack.colliderect(players[current_player].hitbox)
+        ):
+            from_left = enemy_attack.centerx < players[current_player].hitbox.centerx
+            players[current_player].take_damage(1, from_left)
+        elif enemy.health > 0 and players[current_player].hitbox.colliderect(enemy.hitbox) and not enemy_hit:
+            from_left = enemy.hitbox.centerx < players[current_player].hitbox.centerx
+            players[current_player].take_damage(1, from_left)
 
         canvas.blit(background, (0, 0))
         for x in range(0, WINDOW_WIDTH, tile.get_width()):
             canvas.blit(tile, (x, WINDOW_HEIGHT - tile.get_height()))
-        pygame.draw.rect(canvas, (139, 69, 19), platform)
+        canvas.blit(platform_img, platform.topleft)
         if enemy.health > 0:
             enemy.draw(canvas)
         players[current_player].draw(canvas)
@@ -183,23 +216,45 @@ def main() -> None:
 
         if menu_open:
             overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, 180))
+            overlay.fill((0, 0, 0, 200))
             canvas.blit(overlay, (0, 0))
-            font = pygame.font.Font(None, 20)
-            y = 40
-            for line in [
-                "Menu - ESC pour fermer",
-                "M/P : volume musique",
-                "S/D : volume effets",
-                "L/R/J/F/C : changer commandes (gauche/droite/saut/attaque/changer)",
-                "Touche D : coup de pied",
-            ]:
-                txt = font.render(line, True, (255, 255, 255))
-                canvas.blit(txt, (20, y))
-                y += 22
+            font = pygame.font.Font(None, 24)
+            title = font.render("Menu", True, (255, 255, 255))
+            canvas.blit(title, (20, 20))
+
+            # Sliders volume
+            bar_w = 100
+            bar_h = 6
+            vol_y = 50
+            pygame.draw.rect(canvas, (100, 100, 100), (20, vol_y, bar_w, bar_h))
+            pygame.draw.rect(canvas, (255, 255, 255), (20, vol_y, int(bar_w * music_volume), bar_h))
+            txt = font.render("Musique", True, (255, 255, 255))
+            canvas.blit(txt, (130, vol_y - 4))
+
+            vol_y += 20
+            pygame.draw.rect(canvas, (100, 100, 100), (20, vol_y, bar_w, bar_h))
+            pygame.draw.rect(canvas, (255, 255, 255), (20, vol_y, int(bar_w * sfx_volume), bar_h))
+            txt = font.render("Effets", True, (255, 255, 255))
+            canvas.blit(txt, (130, vol_y - 4))
+
+            snes = pygame.image.load(str(SNES_IMG)).convert_alpha()
+            snes = pygame.transform.scale(snes, (120, 60))
+            canvas.blit(snes, (20, vol_y + 30))
+
+            keys = ["up", "down", "left", "right", "attack", "kick", "special", "jump", "prev", "next"]
+            key_y = vol_y + 100
+            box_w = 20
+            for i, k in enumerate(keys):
+                x = 20 + (i % 5) * 60
+                y = key_y + (i // 5) * 30
+                pygame.draw.rect(canvas, (200, 200, 200), (x, y, box_w, box_w), 1)
+                name = pygame.key.name(controls[k])
+                txt = font.render(name, True, (255, 255, 255))
+                canvas.blit(txt, (x + box_w + 4, y))
+
             if waiting_key:
                 txt = font.render("Appuyez sur une touche...", True, (255, 255, 0))
-                canvas.blit(txt, (20, y))
+                canvas.blit(txt, (20, key_y + 70))
 
         pygame.transform.scale(canvas, (DISPLAY_WIDTH, DISPLAY_HEIGHT), window)
         pygame.display.flip()
