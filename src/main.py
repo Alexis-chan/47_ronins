@@ -125,9 +125,22 @@ def main() -> None:
         "next": pygame.K_e,   # R
         "prev": pygame.K_r,   # L
     }
+    keys = [
+        "up",
+        "down",
+        "left",
+        "right",
+        "attack",
+        "kick",
+        "special",
+        "jump",
+        "prev",
+        "next",
+    ]
 
     menu_open = True
     waiting_key: str | None = None
+    selected_key = 0
     music_volume = 1.0
     sfx_volume = 1.0
 
@@ -150,22 +163,21 @@ def main() -> None:
                         sfx_volume = max(0.0, sfx_volume - 0.1)
                     elif event.key == pygame.K_d:
                         sfx_volume = min(1.0, sfx_volume + 0.1)
-                    elif event.key == pygame.K_l:
-                        waiting_key = "left"
-                    elif event.key == pygame.K_r:
-                        waiting_key = "right"
-                    elif event.key == pygame.K_j:
-                        waiting_key = "jump"
-                    elif event.key == pygame.K_f:
-                        waiting_key = "attack"
-                    elif event.key == pygame.K_d:
-                        waiting_key = "kick"
-                    elif event.key == pygame.K_x:
-                        waiting_key = "special"
-                    elif event.key == pygame.K_e:
-                        waiting_key = "next"
-                    elif event.key == pygame.K_q:
-                        waiting_key = "prev"
+                    elif event.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN):
+                        cols = 5
+                        row = selected_key // cols
+                        col = selected_key % cols
+                        if event.key == pygame.K_LEFT and col > 0:
+                            col -= 1
+                        elif event.key == pygame.K_RIGHT and col < cols - 1 and row * cols + col + 1 < len(keys):
+                            col += 1
+                        elif event.key == pygame.K_UP and row > 0:
+                            row -= 1
+                        elif event.key == pygame.K_DOWN and (row + 1) * cols + col < len(keys):
+                            row += 1
+                        selected_key = row * cols + col
+                    elif event.key == pygame.K_RETURN:
+                        waiting_key = keys[selected_key]
                 elif menu_open and waiting_key:
                     controls[waiting_key] = event.key
                     waiting_key = None
@@ -241,13 +253,13 @@ def main() -> None:
             snes = pygame.transform.scale(snes, (120, 60))
             canvas.blit(snes, (20, vol_y + 30))
 
-            keys = ["up", "down", "left", "right", "attack", "kick", "special", "jump", "prev", "next"]
             key_y = vol_y + 100
             box_w = 20
             for i, k in enumerate(keys):
                 x = 20 + (i % 5) * 60
                 y = key_y + (i // 5) * 30
-                pygame.draw.rect(canvas, (200, 200, 200), (x, y, box_w, box_w), 1)
+                color = (255, 0, 0) if i == selected_key else (200, 200, 200)
+                pygame.draw.rect(canvas, color, (x, y, box_w, box_w), 1)
                 name = pygame.key.name(controls[k])
                 txt = font.render(name, True, (255, 255, 255))
                 canvas.blit(txt, (x + box_w + 4, y))

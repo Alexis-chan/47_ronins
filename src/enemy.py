@@ -12,6 +12,8 @@ class Enemy:
     attack_path: Path | None = None
     health: int = 1
 
+    facing_left: bool = True
+
     hitbox: pygame.Rect | None = None
     attacking: bool = False
     attack_timer: int = 0
@@ -30,6 +32,8 @@ class Enemy:
 
     def draw(self, surface: pygame.Surface) -> None:
         img = self.attack_image if self.attacking else self.image
+        if not self.facing_left:
+            img = pygame.transform.flip(img, True, False)
         surface.blit(img, self.rect)
 
     def take_damage(self, amount: int) -> None:
@@ -47,6 +51,7 @@ class Enemy:
         if abs(player_rect.centerx - self.hitbox.centerx) < 40 and abs(player_rect.centery - self.hitbox.centery) < self.hitbox.height:
             self.attacking = True
             self.attack_timer = 20
+            self.facing_left = player_rect.centerx < self.hitbox.centerx
 
     def get_attack_rect(self) -> pygame.Rect | None:
         if not self.attacking or self.attack_timer > 10:
@@ -54,5 +59,8 @@ class Enemy:
         width = 16
         height = self.hitbox.height // 2
         y = self.hitbox.centery - height // 2
-        x = self.hitbox.left - width
+        if self.facing_left:
+            x = self.hitbox.left - width
+        else:
+            x = self.hitbox.right
         return pygame.Rect(x, y, width, height)
