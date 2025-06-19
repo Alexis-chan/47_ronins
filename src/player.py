@@ -187,6 +187,7 @@ class Player:
             self.vel.y = JUMP_SPEED
             self.on_ground = False
             self.jump_phase = "start"
+            self.frame_index = 0
             self.jump_sound.play()
 
     def apply_gravity(self) -> None:
@@ -277,7 +278,7 @@ class Player:
 
         just_landed = not prev_on_ground and self.on_ground
         if just_landed:
-            if "stand" in self.images:
+            if not self.is_attacking and "stand" in self.images:
                 self.current_image = self.images["stand"]
             self.jump_phase = "stand"
 
