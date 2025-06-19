@@ -88,8 +88,8 @@ def main() -> None:
             KOJI_DIR / "Koji_jump_midair.png",
             KOJI_DIR / "Koji_jump_landing.png",
         ],
-        "attack": KOJI_DIR / "Koji_punch.png",
-        "kick": KOJI_DIR / "Koji_kick.png",
+        "attack": KOJI_DIR / "Koji_attac1_punch.png",
+        "kick": KOJI_DIR / "Koji_attac2_kick.png",
         "jumpkick": KOJI_DIR / "Koji_jumpkick.png",
         "hurt": KOJI_DIR / "Koji_hurt.png",
     }
