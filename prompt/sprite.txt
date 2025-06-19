@@ -1,6 +1,6 @@
-1024×1024, pixel-art sprite still frame, side-view anthropomorphic grey cat samurai, red lamellar armor, kabuto with golden crescent, short katana sheathed at left hip, FRAME_DESCRIPTION, centered in canvas on a transparent (alpha) background, 1-px black outline, limited palette (reds, greys, gold, a few neutrals), no scenery. 
+1024×1024, pixel-art sprite still frame, side-view anthropomorphic cat ----- FRAME_DESCRIPTION, centered in canvas on a transparent (alpha) background, 1-px black outline, no scenery, detailed picture. 
 Negative prompt: blurry, low-res, background, border or frame, cropped limbs, inconsistent scale, duplicate characters. 
 Seed: 12345 # (garde la même valeur pour tout le cycle) 
 transparent (alpha) background 
 
-“left leg forward, right leg back, arms relaxed, tail curved slightly downward, hips and head aligned on same baseline 
+-----
