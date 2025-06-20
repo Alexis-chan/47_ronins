@@ -40,8 +40,13 @@ class Enemy:
         self.health = max(0, self.health - amount)
 
     def update(self, player_rect: pygame.Rect) -> None:
+        """Met à jour l'ennemi en faisant toujours face au joueur."""
         if self.health <= 0:
             return
+
+        # oriente le Tengu vers le joueur cible
+        self.facing_left = player_rect.centerx < self.hitbox.centerx
+
         if self.attack_timer > 0:
             self.attack_timer -= 1
             if self.attack_timer == 0:
