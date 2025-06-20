@@ -44,7 +44,9 @@ JUMP_SOUND_FILE: Path = ASSETS_DIR / "son" / "son_saut.wav"
 PUNCH_SOUND_FILE: Path = ASSETS_DIR / "son" / "punch1.wav"
 KICK_SOUND_FILE: Path = ASSETS_DIR / "son" / "kick1.wav"
 SWORD_SOUND_FILE: Path = ASSETS_DIR / "son" / "sword-attac1.wav"
-TENGU_HURT_FILE: Path = ASSETS_DIR / "son" / "tengu_hurt.wma"
+# Le fichier "tengu_hurt.wma" a été remplacé par "Tengu_hurt.wav" dans les assets.
+# On met à jour le chemin pour éviter une erreur de chargement.
+TENGU_HURT_FILE: Path = ASSETS_DIR / "son" / "Tengu_hurt.wav"
 
 CHARACTER_DIR: Path = ASSETS_DIR / "personnages"
 OISHI_DIR: Path = CHARACTER_DIR / "1_Oishi_Samourai"
