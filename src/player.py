@@ -166,6 +166,7 @@ class Player:
         self.vel.x = 2 if from_left else -2
         if "hurt" in self.images:
             self.current_image = self.images["hurt"]
+        self.frame_index = 0
 
     # ————————————————————
     # Boucle d’update
@@ -236,8 +237,10 @@ class Player:
 
         if self.invincible_time > 0:
             self.invincible_time -= 1
-
-        self.handle_input(pressed, controls)
+            # ralentit progressivement le mouvement de recul
+            self.vel.x *= 0.9
+        else:
+            self.handle_input(pressed, controls)
 
         # Déplacement horizontal
         self.hitbox.x += int(self.vel.x)
@@ -280,9 +283,14 @@ class Player:
         if just_landed:
             if not self.is_attacking and "stand" in self.images:
                 self.current_image = self.images["stand"]
+                # reset animation index to avoid flicker when landing
+                self.frame_index = 0
             self.jump_phase = "stand"
 
-        if self.is_attacking:
+        if self.invincible_time > 0 and "hurt" in self.images:
+            self.current_image = self.images["hurt"]
+            self.frame_index = 0
+        elif self.is_attacking:
             state = self.attack_type if self.attack_type else "attack"
             if state in self.animations:
                 if (

@@ -20,6 +20,10 @@ from settings import (
     TILESET_IMG,
     PLATFORM_TILESET_IMG,
     MUSIC_FILE,
+    PUNCH_SOUND_FILE,
+    KICK_SOUND_FILE,
+    SWORD_SOUND_FILE,
+    TENGU_HURT_FILE,
     FULLSCREEN,
     OISHI_DIR,
     KOJI_DIR,
@@ -53,6 +57,12 @@ def main() -> None:
     pygame.mixer.music.load(str(music_path))
     pygame.mixer.music.play(-1)
 
+    # effets sonores
+    punch_snd = pygame.mixer.Sound(str(PUNCH_SOUND_FILE))
+    kick_snd = pygame.mixer.Sound(str(KICK_SOUND_FILE))
+    sword_snd = pygame.mixer.Sound(str(SWORD_SOUND_FILE))
+    tengu_hurt_snd = pygame.mixer.Sound(str(TENGU_HURT_FILE))
+
     background = pygame.image.load(str(background_path)).convert()
     background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
 
@@ -60,7 +70,10 @@ def main() -> None:
     tile = tileset.subsurface(pygame.Rect(0, 0, 32, 32))
     tile = pygame.transform.scale(tile, (32, 32))
     plat_tileset = pygame.image.load(str(PLATFORM_TILESET_IMG)).convert_alpha()
-    platform_img = pygame.transform.scale(plat_tileset, (80, 10))
+    # preserve the original aspect ratio when scaling the platform image
+    scale_w = 80
+    scale_h = int(plat_tileset.get_height() * (scale_w / plat_tileset.get_width()))
+    platform_img = pygame.transform.scale(plat_tileset, (scale_w, scale_h))
 
  
     # Entités
@@ -106,7 +119,12 @@ def main() -> None:
         ENEMY_DIR / "Tengu_attac.png",
     )
 
-    platform = pygame.Rect(WINDOW_WIDTH // 4, WINDOW_HEIGHT - 40, 80, 10)
+    platform = pygame.Rect(
+        WINDOW_WIDTH // 4,
+        WINDOW_HEIGHT - 40,
+        scale_w,
+        scale_h,
+    )
 
     heart_img = pygame.image.load(str(HEART_IMG)).convert_alpha()
     heart_scale = int(heart_img.get_width() * 0.012)
@@ -197,7 +215,12 @@ def main() -> None:
         players[current_player].jump_sound.set_volume(sfx_volume)
         pressed = pygame.key.get_pressed()
         players[current_player].update(pressed, [platform], controls)
-        enemy.update(players[current_player].hitbox)
+        # trouve le joueur le plus proche pour orienter le Tengu
+        target = min(
+            players,
+            key=lambda p: abs(p.hitbox.centerx - enemy.hitbox.centerx),
+        )
+        enemy.update(target.hitbox)
 
         # Gestion des collisions avec l'ennemi
         attack_rect = players[current_player].get_attack_rect()
@@ -205,6 +228,17 @@ def main() -> None:
         if enemy.health > 0 and attack_rect and enemy.hitbox.colliderect(attack_rect):
             enemy.take_damage(players[current_player].attack_damage())
             enemy_hit = True
+            # joue le son correspondant au type d'attaque
+            if players[current_player].attack_type == "kick":
+                snd = kick_snd
+            elif players[current_player].name.lower() == "oishi":
+                snd = sword_snd
+            else:
+                snd = punch_snd
+            snd.set_volume(sfx_volume)
+            snd.play()
+            tengu_hurt_snd.set_volume(sfx_volume)
+            tengu_hurt_snd.play()
         enemy_attack = enemy.get_attack_rect()
         if (
             enemy.health > 0
