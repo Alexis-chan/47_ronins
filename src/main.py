@@ -115,8 +115,8 @@ def main() -> None:
 
     enemy = Enemy(
         (WINDOW_WIDTH - 40, WINDOW_HEIGHT),
-        ENEMY_DIR / "Tengu_stand.png",
-        ENEMY_DIR / "Tengu_attac.png",
+        ENEMY_DIR / "Tengu_stand_right.png",
+        ENEMY_DIR / "Tengu_attac_right.png",
     )
 
     platform = pygame.Rect(
