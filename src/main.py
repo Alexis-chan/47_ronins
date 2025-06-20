@@ -18,7 +18,6 @@ from settings import (
     FPS,
     BACKGROUND_IMG,
     TILESET_IMG,
-    PLATFORM_TILESET_IMG,
     MUSIC_FILE,
     PUNCH_SOUND_FILE,
     KICK_SOUND_FILE,
@@ -69,11 +68,6 @@ def main() -> None:
     tileset = pygame.image.load(str(TILESET_IMG)).convert_alpha()
     tile = tileset.subsurface(pygame.Rect(0, 0, 32, 32))
     tile = pygame.transform.scale(tile, (32, 32))
-    plat_tileset = pygame.image.load(str(PLATFORM_TILESET_IMG)).convert_alpha()
-    # preserve the original aspect ratio when scaling the platform image
-    scale_w = 80
-    scale_h = int(plat_tileset.get_height() * (scale_w / plat_tileset.get_width()))
-    platform_img = pygame.transform.scale(plat_tileset, (scale_w, scale_h))
 
  
     # Entités
@@ -108,22 +102,15 @@ def main() -> None:
     }
 
     players = [
-        Player((WINDOW_WIDTH // 2, WINDOW_HEIGHT - 20), oishi_assets, name="Oishi"),
-        Player((WINDOW_WIDTH // 2, WINDOW_HEIGHT - 20), koji_assets, name="Koji"),
+        Player((40, WINDOW_HEIGHT - 20), oishi_assets, name="Oishi"),
+        Player((40, WINDOW_HEIGHT - 20), koji_assets, name="Koji"),
     ]
     current_player = 0
 
     enemy = Enemy(
-        (WINDOW_WIDTH - 40, WINDOW_HEIGHT),
+        (WINDOW_WIDTH // 2, WINDOW_HEIGHT),
         ENEMY_DIR / "Tengu_stand_right.png",
         ENEMY_DIR / "Tengu_attac_right.png",
-    )
-
-    platform = pygame.Rect(
-        WINDOW_WIDTH // 4,
-        WINDOW_HEIGHT - 40,
-        scale_w,
-        scale_h,
     )
 
     heart_img = pygame.image.load(str(HEART_IMG)).convert_alpha()
@@ -156,13 +143,14 @@ def main() -> None:
         "next",
     ]
 
-    menu_open = True
+    menu_open = False
     waiting_key: str | None = None
     selected_key = 0
     music_volume = 1.0
     sfx_volume = 1.0
 
     running = True
+    restart = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -201,6 +189,9 @@ def main() -> None:
                     waiting_key = None
                 elif event.key == controls.get("attack") and not menu_open:
                     players[current_player].start_attack()
+                    if players[current_player].name.lower() == "oishi":
+                        sword_snd.set_volume(sfx_volume)
+                        sword_snd.play()
                 elif event.key == controls.get("kick") and not menu_open:
                     players[current_player].start_kick()
                 elif event.key == controls.get("next") and not menu_open:
@@ -211,10 +202,13 @@ def main() -> None:
                     old = players[current_player]
                     current_player = (current_player - 1) % len(players)
                     players[current_player].hitbox.midbottom = old.hitbox.midbottom
+                elif event.key == pygame.K_p and not menu_open:
+                    restart = True
+                    running = False
 
         players[current_player].jump_sound.set_volume(sfx_volume)
         pressed = pygame.key.get_pressed()
-        players[current_player].update(pressed, [platform], controls)
+        players[current_player].update(pressed, None, controls)
         # trouve le joueur le plus proche pour orienter le Tengu
         target = min(
             players,
@@ -231,8 +225,6 @@ def main() -> None:
             # joue le son correspondant au type d'attaque
             if players[current_player].attack_type == "kick":
                 snd = kick_snd
-            elif players[current_player].name.lower() == "oishi":
-                snd = sword_snd
             else:
                 snd = punch_snd
             snd.set_volume(sfx_volume)
@@ -254,7 +246,6 @@ def main() -> None:
         canvas.blit(background, (0, 0))
         for x in range(0, WINDOW_WIDTH, tile.get_width()):
             canvas.blit(tile, (x, WINDOW_HEIGHT - tile.get_height()))
-        canvas.blit(platform_img, platform.topleft)
         if enemy.health > 0:
             enemy.draw(canvas)
         players[current_player].draw(canvas)
@@ -307,6 +298,9 @@ def main() -> None:
         clock.tick(FPS)
 
     pygame.quit()
+    if restart:
+        main()
+        return
     sys.exit()
 
 
