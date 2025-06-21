@@ -19,7 +19,6 @@ from settings import (
     BACKGROUND_IMG,
     BACKGROUND_IMG_2,
     TILESET_IMG,
-    PLATFORM_TILESET_IMG,
     MUSIC_FILE,
     PUNCH_SOUND_FILE,
     KICK_SOUND_FILE,
@@ -34,6 +33,7 @@ from settings import (
 )
 from player import Player
 from enemy import Enemy
+from platforms import create_level_platforms
 
 
 def main() -> None:
@@ -70,10 +70,7 @@ def main() -> None:
     background2 = pygame.image.load(str(background2_path)).convert()
     background2 = pygame.transform.scale(background2, (WINDOW_WIDTH, WINDOW_HEIGHT))
 
-    platform_sheet = pygame.image.load(str(PLATFORM_TILESET_IMG)).convert_alpha()
-    platform_img = platform_sheet.subsurface(pygame.Rect(0, 0, 32, 8))
-    platform_img = pygame.transform.scale(platform_img, (32, 8))
-    platform = platform_img.get_rect(midbottom=(WINDOW_WIDTH + 80, WINDOW_HEIGHT - 40))
+    platforms = create_level_platforms()
 
     level_width = WINDOW_WIDTH * 2
 
@@ -107,7 +104,7 @@ def main() -> None:
             KOJI_DIR / "Koji_jump_midair.png",
             KOJI_DIR / "Koji_jump_landing.png",
         ],
-        "attack": KOJI_DIR / "Koji_attac1_punch.png",
+        "attack": KOJI_DIR / "Koji_punch.png",
         "kick": KOJI_DIR / "Koji_attac2_kick.png",
         "jumpkick": KOJI_DIR / "Koji_jumpkick.png",
         "hurt": KOJI_DIR / "Koji_hurt.png",
@@ -225,7 +222,7 @@ def main() -> None:
 
         players[current_player].jump_sound.set_volume(sfx_volume)
         pressed = pygame.key.get_pressed()
-        players[current_player].update(pressed, [platform], controls)
+        players[current_player].update(pressed, [p.rect for p in platforms], controls)
         camera_x = max(0, min(level_width - WINDOW_WIDTH, players[current_player].hitbox.centerx - WINDOW_WIDTH // 2))
         # trouve le joueur le plus proche pour orienter le Tengu
         target = min(
@@ -265,7 +262,8 @@ def main() -> None:
         canvas.blit(background2, (WINDOW_WIDTH - camera_x, 0))
         for x in range(0, level_width, tile.get_width()):
             canvas.blit(tile, (x - camera_x, WINDOW_HEIGHT - tile.get_height()))
-        canvas.blit(platform_img, (platform.x - camera_x, platform.y))
+        for plat in platforms:
+            canvas.blit(plat.image, (plat.rect.x - camera_x, plat.rect.y))
         if enemy.health > 0:
             enemy.draw(canvas, camera_x)
         players[current_player].draw(canvas, camera_x)

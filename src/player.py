@@ -245,26 +245,18 @@ class Player:
         if self.invincible_time > 0:
             self.invincible_time -= 1
 
-        # Déplacement horizontal
+        # Horizontal movement
         self.hitbox.x += int(self.vel.x)
         if self.hitbox.left < 0:
             self.hitbox.left = 0
 
-        if self.on_ground and platforms:
-            on_plat = False
-            for plat in platforms:
-                if self.hitbox.bottom == plat.top and self.hitbox.colliderect(plat):
-                    on_plat = True
-                    break
-            if not on_plat and self.hitbox.bottom < WINDOW_HEIGHT:
-                self.on_ground = False
-
         self.apply_gravity()
 
-        # Déplacement vertical
+        # Vertical movement
         self.hitbox.y += int(self.vel.y)
+        self.on_ground = False
 
-        # Collision simple avec le sol (bas de la fenêtre)
+        # Floor collision
         if self.hitbox.bottom >= WINDOW_HEIGHT:
             self.hitbox.bottom = WINDOW_HEIGHT
             self.vel.y = 0
@@ -272,11 +264,10 @@ class Player:
 
         if platforms:
             for plat in platforms:
-                prev_bottom = self.hitbox.bottom - int(self.vel.y)
                 if (
                     self.hitbox.colliderect(plat)
-                    and prev_bottom <= plat.top
                     and self.vel.y >= 0
+                    and self.hitbox.bottom - self.vel.y <= plat.top
                 ):
                     self.hitbox.bottom = plat.top
                     self.vel.y = 0
