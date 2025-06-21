@@ -267,10 +267,15 @@ class Player:
 
         if platforms:
             for plat in platforms:
+                # When computing collisions we must compare against the
+                # integer movement actually applied to the hitbox. Using the
+                # raw float velocity can leave the player barely intersecting
+                # the platform and fail to detect the landing correctly.
+                prev_bottom = self.hitbox.bottom - int(self.vel.y)
                 if (
                     self.hitbox.colliderect(plat)
                     and self.vel.y >= 0
-                    and self.hitbox.bottom - self.vel.y <= plat.top
+                    and prev_bottom <= plat.top
                 ):
                     self.hitbox.bottom = plat.top
                     self.vel.y = 0
