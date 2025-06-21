@@ -256,6 +256,7 @@ class Player:
         self.apply_gravity()
 
         # Vertical movement
+        prev_bottom = self.hitbox.bottom
         self.hitbox.y += int(self.vel.y)
         self.on_ground = False
 
@@ -267,11 +268,9 @@ class Player:
 
         if platforms:
             for plat in platforms:
-                # When computing collisions we must compare against the
-                # integer movement actually applied to the hitbox. Using the
-                # raw float velocity can leave the player barely intersecting
-                # the platform and fail to detect the landing correctly.
-                prev_bottom = self.hitbox.bottom - int(self.vel.y)
+                # Use the player's position before movement to detect if the
+                # bottom crossed the platform top this frame. Checking against
+                # the raw velocity can miss collisions when rounding occurs.
                 if (
                     self.hitbox.colliderect(plat)
                     and self.vel.y >= 0
