@@ -271,16 +271,19 @@ class Player:
                 prev_bottom = self.hitbox.bottom - move_y
 
                 will_cross = self.vel.y >= 0 and prev_bottom <= plat.top < self.hitbox.bottom
+                overlap = self.hitbox.right > plat.left and self.hitbox.left < plat.right
 
-                if will_cross:
+                if will_cross and overlap:
                     self.hitbox.bottom = plat.top
                     self.vel.y = 0
                     self.on_ground = True
+                    break
 
-                elif abs(self.hitbox.bottom - plat.top) <= 1 and self.vel.y >= 0:
+                elif abs(self.hitbox.bottom - plat.top) <= 1 and self.vel.y >= 0 and overlap:
                     self.hitbox.bottom = plat.top
                     self.vel.y = 0
                     self.on_ground = True
+                    break
 
         just_landed = not prev_on_ground and self.on_ground
         if just_landed:
