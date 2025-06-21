@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import pygame
-from settings import PLATFORM_TILESET_IMG, WINDOW_WIDTH, WINDOW_HEIGHT
+from settings import PLATFORM_TILESET_IMG, WINDOW_WIDTH, WINDOW_HEIGHT, PLAYER_SCALE
 
 
 @dataclass
@@ -16,10 +16,16 @@ class Platform:
 def load_platform_image() -> pygame.Surface:
     """Load and return the platform sprite."""
     sheet = pygame.image.load(str(PLATFORM_TILESET_IMG)).convert_alpha()
-    # The top-left tiles of the sheet are fully transparent. We grab
-    # a visible platform sprite located further down in the tileset.
-    img = sheet.subsurface(pygame.Rect(160, 352, 32, 8))
-    return pygame.transform.scale(img, (32, 8))
+
+    # Extract a larger portion of the tileset to avoid heavy pixelation.
+    region = pygame.Rect(0, 896, 512, 64)
+    img = sheet.subsurface(region).copy()
+
+    # Scale down using the same factor as the characters for pixel-perfect
+    # consistency.
+    w, h = img.get_size()
+    img = pygame.transform.scale(img, (int(w * PLAYER_SCALE), int(h * PLAYER_SCALE)))
+    return img
 
 
 def create_level_platforms() -> list[Platform]:
