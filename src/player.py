@@ -100,25 +100,30 @@ class Player:
         w, h = sheet.get_width(), sheet.get_height()
 
         if w >= h:
-            frame_size = h
-            num_frames = w // frame_size
+            # frames disposées horizontalement
+            num_frames = max(1, round(w / h))
+            frame_w = w // num_frames
+            frame_h = h
             regions = [
-                pygame.Rect(i * frame_size, 0, frame_size, frame_size)
+                pygame.Rect(i * frame_w, 0, frame_w, frame_h)
                 for i in range(num_frames)
             ]
         else:
-            frame_size = w
-            num_frames = h // frame_size
+            # frames disposées verticalement
+            num_frames = max(1, round(h / w))
+            frame_w = w
+            frame_h = h // num_frames
             regions = [
-                pygame.Rect(0, i * frame_size, frame_size, frame_size)
+                pygame.Rect(0, i * frame_h, frame_w, frame_h)
                 for i in range(num_frames)
             ]
 
         frames: list[pygame.Surface] = []
         for rect in regions:
             region = sheet.subsurface(rect).copy()
-            scale = int(frame_size * PLAYER_SCALE)
-            region = pygame.transform.scale(region, (scale, scale))
+            w_scaled = int(rect.width * PLAYER_SCALE)
+            h_scaled = int(rect.height * PLAYER_SCALE)
+            region = pygame.transform.scale(region, (w_scaled, h_scaled))
             frames.append(region)
 
         return frames
