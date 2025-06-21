@@ -16,7 +16,9 @@ class Platform:
 def load_platform_image() -> pygame.Surface:
     """Load and return the platform sprite."""
     sheet = pygame.image.load(str(PLATFORM_TILESET_IMG)).convert_alpha()
-    img = sheet.subsurface(pygame.Rect(0, 0, 32, 8))
+    # The top-left tiles of the sheet are fully transparent. We grab
+    # a visible platform sprite located further down in the tileset.
+    img = sheet.subsurface(pygame.Rect(160, 352, 32, 8))
     return pygame.transform.scale(img, (32, 8))
 
 
