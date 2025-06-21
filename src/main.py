@@ -17,7 +17,9 @@ from settings import (
     DISPLAY_HEIGHT,
     FPS,
     BACKGROUND_IMG,
+    BACKGROUND_IMG_2,
     TILESET_IMG,
+    PLATFORM_TILESET_IMG,
     MUSIC_FILE,
     PUNCH_SOUND_FILE,
     KICK_SOUND_FILE,
@@ -51,6 +53,7 @@ def main() -> None:
     # Chemins absolus des assets
     music_path = Path(MUSIC_FILE)
     background_path = Path(BACKGROUND_IMG)
+    background2_path = Path(BACKGROUND_IMG_2)
 
     # Chargement audio + image
     pygame.mixer.music.load(str(music_path))
@@ -64,6 +67,15 @@ def main() -> None:
 
     background = pygame.image.load(str(background_path)).convert()
     background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
+    background2 = pygame.image.load(str(background2_path)).convert()
+    background2 = pygame.transform.scale(background2, (WINDOW_WIDTH, WINDOW_HEIGHT))
+
+    platform_sheet = pygame.image.load(str(PLATFORM_TILESET_IMG)).convert_alpha()
+    platform_img = platform_sheet.subsurface(pygame.Rect(0, 0, 32, 8))
+    platform_img = pygame.transform.scale(platform_img, (32, 8))
+    platform = platform_img.get_rect(midbottom=(WINDOW_WIDTH + 80, WINDOW_HEIGHT - 40))
+
+    level_width = WINDOW_WIDTH * 2
 
     tileset = pygame.image.load(str(TILESET_IMG)).convert_alpha()
     tile = tileset.subsurface(pygame.Rect(0, 0, 32, 32))
@@ -109,8 +121,8 @@ def main() -> None:
 
     enemy = Enemy(
         (WINDOW_WIDTH // 2, WINDOW_HEIGHT),
-        ENEMY_DIR / "Tengu_stand_right.png",
-        ENEMY_DIR / "Tengu_attac_right.png",
+        ENEMY_DIR / "Tengu_stand_left.png",
+        ENEMY_DIR / "Tengu_attac.png",
     )
 
     heart_img = pygame.image.load(str(HEART_IMG)).convert_alpha()
@@ -149,6 +161,7 @@ def main() -> None:
     music_volume = 1.0
     sfx_volume = 1.0
 
+    camera_x = 0
     running = True
     restart = False
     while running:
@@ -158,6 +171,10 @@ def main() -> None:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     menu_open = not menu_open
+                    if menu_open:
+                        pygame.mixer.music.pause()
+                    else:
+                        pygame.mixer.music.unpause()
                 elif menu_open and waiting_key is None:
                     if event.key == pygame.K_m:
                         music_volume = max(0.0, music_volume - 0.1)
@@ -208,7 +225,8 @@ def main() -> None:
 
         players[current_player].jump_sound.set_volume(sfx_volume)
         pressed = pygame.key.get_pressed()
-        players[current_player].update(pressed, None, controls)
+        players[current_player].update(pressed, [platform], controls)
+        camera_x = max(0, min(level_width - WINDOW_WIDTH, players[current_player].hitbox.centerx - WINDOW_WIDTH // 2))
         # trouve le joueur le plus proche pour orienter le Tengu
         target = min(
             players,
@@ -243,12 +261,14 @@ def main() -> None:
             from_left = enemy.hitbox.centerx < players[current_player].hitbox.centerx
             players[current_player].take_damage(1, from_left)
 
-        canvas.blit(background, (0, 0))
-        for x in range(0, WINDOW_WIDTH, tile.get_width()):
-            canvas.blit(tile, (x, WINDOW_HEIGHT - tile.get_height()))
+        canvas.blit(background, (-camera_x, 0))
+        canvas.blit(background2, (WINDOW_WIDTH - camera_x, 0))
+        for x in range(0, level_width, tile.get_width()):
+            canvas.blit(tile, (x - camera_x, WINDOW_HEIGHT - tile.get_height()))
+        canvas.blit(platform_img, (platform.x - camera_x, platform.y))
         if enemy.health > 0:
-            enemy.draw(canvas)
-        players[current_player].draw(canvas)
+            enemy.draw(canvas, camera_x)
+        players[current_player].draw(canvas, camera_x)
         players[current_player].draw_health(canvas, heart)
 
         if menu_open:

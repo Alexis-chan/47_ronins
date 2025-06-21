@@ -30,11 +30,12 @@ class Enemy:
         else:
             self.attack_image = self.image
 
-    def draw(self, surface: pygame.Surface) -> None:
+    def draw(self, surface: pygame.Surface, offset_x: int = 0) -> None:
         img = self.attack_image if self.attacking else self.image
         if not self.facing_left:
             img = pygame.transform.flip(img, True, False)
-        surface.blit(img, self.rect)
+        rect = self.rect.move(-offset_x, 0)
+        surface.blit(img, rect)
 
     def take_damage(self, amount: int) -> None:
         self.health = max(0, self.health - amount)

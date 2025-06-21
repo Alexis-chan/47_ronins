@@ -37,6 +37,7 @@ BASE_DIR: Path = Path(__file__).resolve().parent.parent
 ASSETS_DIR: Path = BASE_DIR / "assets"
 
 BACKGROUND_IMG: Path = ASSETS_DIR / "niveaux" / "background_forest.png"
+BACKGROUND_IMG_2: Path = ASSETS_DIR / "niveaux" / "background_forest2.png"
 TILESET_IMG: Path = ASSETS_DIR / "niveaux" / "tileset_forest.png"
 PLATFORM_TILESET_IMG: Path = ASSETS_DIR / "niveaux" / "tileset_plateform_1.png"
 MUSIC_FILE: Path = ASSETS_DIR / "son" / "music_stage_1.wav"
@@ -51,7 +52,7 @@ TENGU_HURT_FILE: Path = ASSETS_DIR / "son" / "Tengu_hurt.wav"
 CHARACTER_DIR: Path = ASSETS_DIR / "personnages"
 OISHI_DIR: Path = CHARACTER_DIR / "1_Oishi_Samourai"
 KOJI_DIR: Path = CHARACTER_DIR / "2_Koji_Karateka"
-ENEMY_DIR: Path = CHARACTER_DIR / "enemy"
+ENEMY_DIR: Path = ASSETS_DIR / "ennemis"
 
 HEART_IMG: Path = ASSETS_DIR / "ui" / "Heart_lifepoint.png"
 SNES_IMG: Path = ASSETS_DIR / "ui" / "Manette_SNES.png"
