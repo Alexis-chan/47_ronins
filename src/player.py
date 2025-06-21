@@ -164,6 +164,7 @@ class Player:
         self.health = max(0, self.health - amount)
         self.invincible_time = 60  # ~1 seconde à 60 FPS
         self.vel.x = 2 if from_left else -2
+        self.is_attacking = False
         if "hurt" in self.images:
             self.current_image = self.images["hurt"]
         self.frame_index = 0
@@ -198,7 +199,7 @@ class Player:
 
     def start_attack(self) -> None:
         """Déclenche l'animation d'attaque (poing ou arme)."""
-        if not self.is_attacking:
+        if not self.is_attacking and self.invincible_time <= 0:
             self.is_attacking = True
             self.frame_index = 0
             self.invincible = True
@@ -214,7 +215,7 @@ class Player:
 
     def start_kick(self) -> None:
         """Déclenche une attaque de type coup de pied."""
-        if not self.is_attacking and "kick" in self.animations:
+        if not self.is_attacking and self.invincible_time <= 0 and "kick" in self.animations:
             self.is_attacking = True
             self.frame_index = 0
             self.invincible = True
@@ -235,12 +236,9 @@ class Player:
 
         prev_on_ground = self.on_ground
 
+        self.handle_input(pressed, controls)
         if self.invincible_time > 0:
             self.invincible_time -= 1
-            # ralentit progressivement le mouvement de recul
-            self.vel.x *= 0.9
-        else:
-            self.handle_input(pressed, controls)
 
         # Déplacement horizontal
         self.hitbox.x += int(self.vel.x)
@@ -281,10 +279,11 @@ class Player:
 
         just_landed = not prev_on_ground and self.on_ground
         if just_landed:
-            if not self.is_attacking and "stand" in self.images:
+            self.is_attacking = False
+            if "stand" in self.images:
                 self.current_image = self.images["stand"]
-                # reset animation index to avoid flicker when landing
-                self.frame_index = 0
+            # reset animation index to avoid flicker when landing
+            self.frame_index = 0
             self.jump_phase = "stand"
 
         if self.invincible_time > 0 and "hurt" in self.images:
@@ -334,13 +333,13 @@ class Player:
     # Rendu
     # ————————————————————
 
-    def draw(self, surface: pygame.Surface) -> None:
+    def draw(self, surface: pygame.Surface, offset_x: int = 0) -> None:
         """Dessine le sprite actuel."""
         image = self.current_image
         if self.facing_left:
             image = pygame.transform.flip(image, True, False)
 
-        img_rect = image.get_rect(midbottom=self.hitbox.midbottom)
+        img_rect = image.get_rect(midbottom=(self.hitbox.midbottom[0] - offset_x, self.hitbox.midbottom[1]))
         surface.blit(image, img_rect)
 
     def draw_health(self, surface: pygame.Surface, heart: pygame.Surface) -> None:
