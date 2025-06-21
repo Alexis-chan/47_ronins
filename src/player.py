@@ -7,14 +7,15 @@ Gestion :
 """
 
 from dataclasses import dataclass
+from pathlib import Path
 import pygame
 from settings import (
-    PLAYER_RED,
     PLAYER_SPEED,
     GRAVITY,
     JUMP_SPEED,
     WINDOW_HEIGHT,
     PLAYER_SCALE,
+    SPRITE_SIZE,
     PLAYER_STAND_IMG,
     PLAYER_WALK_IMG,
     PLAYER_JUMP_IMG,
@@ -30,29 +31,40 @@ class Player:
     vel: pygame.Vector2
     on_ground: bool = False
     facing_left: bool = False
-    images: dict[str, pygame.Surface] | None = None
-    current_image: pygame.Surface | None = None
+    animations: dict[str, list[pygame.Surface]] | None = None
+    state: str = "stand"
+    frame_index: int = 0
+    frame_delay: int = 5
+    frame_timer: int = 0
 
     def __init__(self, pos: tuple[int, int]):
-        self.images = {
-            "stand": pygame.image.load(str(PLAYER_STAND_IMG)).convert_alpha(),
-            "walk": pygame.image.load(str(PLAYER_WALK_IMG)).convert_alpha(),
-            "jump": pygame.image.load(str(PLAYER_JUMP_IMG)).convert_alpha(),
-            "sit": pygame.image.load(str(PLAYER_SIT_IMG)).convert_alpha(),
+        self.animations = {
+            "stand": self._load_frames(PLAYER_STAND_IMG),
+            "walk": self._load_frames(PLAYER_WALK_IMG),
+            "jump": self._load_frames(PLAYER_JUMP_IMG),
+            "sit": self._load_frames(PLAYER_SIT_IMG),
         }
 
-        # Réduction des sprites pour une taille adaptée à l'écran
-        for key, img in self.images.items():
-            w = int(img.get_width() * PLAYER_SCALE)
-            h = int(img.get_height() * PLAYER_SCALE)
-            self.images[key] = pygame.transform.scale(img, (w, h))
-        self.current_image = self.images["stand"]
-        width, height = self.current_image.get_size()
+        image = self.animations["stand"][0]
+        width, height = image.get_size()
         self.rect = pygame.Rect(pos[0], pos[1], width, height)
         self.vel = pygame.Vector2(0, 0)
         self.on_ground = False
         self.facing_left = False
         self.jump_sound = pygame.mixer.Sound(str(JUMP_SOUND_FILE))
+
+    def _load_frames(self, path: Path) -> list[pygame.Surface]:
+        """Découpe une sprite sheet en frames redimensionnées."""
+        sheet = pygame.image.load(str(path)).convert_alpha()
+        frames: list[pygame.Surface] = []
+        for y in range(0, sheet.get_height(), SPRITE_SIZE):
+            for x in range(0, sheet.get_width(), SPRITE_SIZE):
+                rect = pygame.Rect(x, y, SPRITE_SIZE, SPRITE_SIZE)
+                frame = sheet.subsurface(rect)
+                w = int(SPRITE_SIZE * PLAYER_SCALE)
+                h = int(SPRITE_SIZE * PLAYER_SCALE)
+                frames.append(pygame.transform.scale(frame, (w, h)))
+        return frames
 
     # ————————————————————
     # Boucle d’update
@@ -97,13 +109,18 @@ class Player:
             self.on_ground = True
 
         if not self.on_ground:
-            self.current_image = self.images["jump"]
+            self.state = "jump"
         elif pressed[pygame.K_DOWN] or pressed[pygame.K_s]:
-            self.current_image = self.images["sit"]
+            self.state = "sit"
         elif self.vel.x != 0:
-            self.current_image = self.images["walk"]
+            self.state = "walk"
         else:
-            self.current_image = self.images["stand"]
+            self.state = "stand"
+
+        self.frame_timer += 1
+        if self.frame_timer >= self.frame_delay:
+            self.frame_timer = 0
+            self.frame_index = (self.frame_index + 1) % len(self.animations[self.state])
 
     # ————————————————————
     # Rendu
@@ -111,7 +128,7 @@ class Player:
 
     def draw(self, surface: pygame.Surface) -> None:
         """Dessine le sprite actuel."""
-        image = self.current_image
+        image = self.animations[self.state][self.frame_index]
         if self.facing_left:
             image = pygame.transform.flip(image, True, False)
         surface.blit(image, self.rect)
