@@ -28,6 +28,7 @@ FPS: int = 60
 PLAYER_SPEED: float = 2.5  # Vitesse horizontale en px par frame (avant upscale)
 GRAVITY: float = 0.35      # Accélération gravitationnelle
 JUMP_SPEED: float = -6.5   # Impulsion verticale du saut (négatif = vers le haut)
+LANDING_TIME: int = 6      # Durée d'affichage de la frame d'atterrissage
 
 # —— Autres ——
 GROUND_Y: int = WINDOW_HEIGHT  # Limite inférieure (sol) pour collision simple

@@ -16,6 +16,7 @@ from settings import (
     WINDOW_HEIGHT,
     PLAYER_SCALE,
     JUMP_SOUND_FILE,
+    LANDING_TIME,
 )
 
 @dataclass
@@ -36,6 +37,7 @@ class Player:
     jump_phase: str = "stand"
     invincible_time: int = 0
     invincible: bool = False
+    landing_timer: int = 0
 
     attack_type: str = ""
     name: str = "player"
@@ -84,6 +86,7 @@ class Player:
         self.jump_phase = "stand"
         self.invincible_time = 0
         self.invincible = False
+        self.landing_timer = 0
 
     def _load_frames(self, paths: Path | list[Path]) -> list[pygame.Surface]:
         """Charge des frames depuis une feuille de sprites ou plusieurs images."""
@@ -276,11 +279,14 @@ class Player:
         just_landed = not prev_on_ground and self.on_ground
         if just_landed:
             self.is_attacking = False
-            if "stand" in self.images:
+            self.landing_timer = LANDING_TIME
+            frames = self.animations.get("jump")
+            if frames and len(frames) > 2:
+                self.current_image = frames[2]
+            elif "stand" in self.images:
                 self.current_image = self.images["stand"]
-            # reset animation index to avoid flicker when landing
             self.frame_index = 0
-            self.jump_phase = "stand"
+            self.jump_phase = "landing"
 
         if self.invincible_time > 0 and "hurt" in self.images:
             self.current_image = self.images["hurt"]
@@ -310,6 +316,13 @@ class Player:
             frames = self.animations.get("jump")
             if frames:
                 self.current_image = frames[1]
+        elif self.jump_phase == "landing":
+            frames = self.animations.get("jump")
+            if frames and len(frames) > 2:
+                self.current_image = frames[2]
+            self.landing_timer -= 1
+            if self.landing_timer <= 0:
+                self.jump_phase = "stand"
         elif pressed[controls.get("down", pygame.K_DOWN)]:
             if "sit" in self.images:
                 self.current_image = self.images["sit"]
