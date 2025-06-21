@@ -18,7 +18,11 @@ def load_platform_image() -> pygame.Surface:
     sheet = pygame.image.load(str(PLATFORM_TILESET_IMG)).convert_alpha()
 
     # Extract a larger portion of the tileset to avoid heavy pixelation.
-    region = pygame.Rect(0, 896, 512, 64)
+    # The transparent margin on the left of the tileset starts around
+    # x=0. The wooden platform graphics are located a bit further down
+    # in the sheet. We grab a wide 512x64 slice starting at (64, 448)
+    # so that scaling down keeps good quality.
+    region = pygame.Rect(64, 448, 512, 64)
     img = sheet.subsurface(region).copy()
 
     # Scale down using the same factor as the characters for pixel-perfect
