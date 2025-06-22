@@ -38,7 +38,10 @@ GROUND_Y: int = WINDOW_HEIGHT  # Limite inférieure (sol) pour collision simple
 BASE_DIR: Path = Path(__file__).resolve().parent.parent
 ASSETS_DIR: Path = BASE_DIR / "assets"
 
-BACKGROUND_IMG: Path = ASSETS_DIR / "niveaux" / "background_forest.png"
+# L'image d'arrière‑plan du premier stage provient maintenant du dossier
+# "Exemple" ajouté récemment.  Cela permet d'obtenir le rendu souhaité par
+# l'auteur.
+BACKGROUND_IMG: Path = BASE_DIR / "Exemple" / "background_stage_1.png"
 BACKGROUND_IMG_2: Path = ASSETS_DIR / "niveaux" / "background_forest2.png"
 TILESET_IMG: Path = ASSETS_DIR / "niveaux" / "tileset_forest.png"
 PLATFORM_TILESET_IMG: Path = ASSETS_DIR / "niveaux" / "tileset_plateform_1.png"

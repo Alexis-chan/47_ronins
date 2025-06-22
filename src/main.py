@@ -28,12 +28,14 @@ from settings import (
     OISHI_DIR,
     KOJI_DIR,
     ENEMY_DIR,
+    CHARACTER_DIR,
     HEART_IMG,
     SNES_IMG,
 )
 from player import Player
 from enemy import Enemy
 from platforms import create_level_platforms, create_level_ladders
+from npc import NPC
 
 
 def main() -> None:
@@ -117,22 +119,33 @@ def main() -> None:
     ]
     current_player = 0
 
+    # NPC Isamu placed near the end of the level
+    isamu = NPC(
+        (level_width - 80, WINDOW_HEIGHT),
+        CHARACTER_DIR / "3_Isamu_archer" / "Isamu-standing.png",
+    )
+    isamu_recruited = False
+    show_dialog = False
+    dialog_timer = 0
+    stage_timer = 0
+
+
     enemy = Enemy(
         (WINDOW_WIDTH // 2, WINDOW_HEIGHT),
         ENEMY_DIR / "Tengu_stand_left.png",
         ENEMY_DIR / "Tengu_attac.png",
-        patrol_left=WINDOW_WIDTH // 2 - 40,
-        patrol_right=WINDOW_WIDTH // 2 + 40,
+        patrol_left=WINDOW_WIDTH // 2 - 100,
+        patrol_right=WINDOW_WIDTH // 2 + 100,
     )
 
     # Second Tengu placed on the third platform
     plat = platforms[-1]
     enemy2 = Enemy(
-        (plat.rect.centerx, plat.rect.top),
+        (plat.rect.centerx, plat.rect.top - 80),
         ENEMY_DIR / "Tengu_stand_left.png",
         ENEMY_DIR / "Tengu_attac.png",
-        patrol_left=plat.rect.left,
-        patrol_right=plat.rect.right,
+        patrol_left=plat.rect.left - 50,
+        patrol_right=plat.rect.right + 50,
     )
     enemies = [enemy, enemy2]
 
@@ -175,6 +188,7 @@ def main() -> None:
     camera_x = 0
     running = True
     game_over = False
+    stage_complete = False
     restart = False
     while running:
         for event in pygame.event.get():
@@ -227,7 +241,16 @@ def main() -> None:
                         sword_snd.set_volume(sfx_volume)
                         sword_snd.play()
                 elif event.key == controls.get("kick") and not menu_open:
-                    players[current_player].start_kick()
+                    if (
+                        players[current_player].name.lower() == "oishi"
+                        and not isamu_recruited
+                        and players[current_player].hitbox.colliderect(isamu.rect.inflate(10, 10))
+                    ):
+                        show_dialog = True
+                        dialog_timer = 180
+                        isamu_recruited = True
+                    else:
+                        players[current_player].start_kick()
                 elif event.key == controls.get("next") and not menu_open:
                     old = players[current_player]
                     current_player = (current_player + 1) % len(players)
@@ -240,7 +263,7 @@ def main() -> None:
                     restart = True
                     running = False
 
-        if not game_over:
+        if not game_over and not show_dialog:
             players[current_player].jump_sound.set_volume(sfx_volume)
             pressed = pygame.key.get_pressed()
             players[current_player].update(
@@ -254,7 +277,7 @@ def main() -> None:
             for en in enemies:
                 # trouve le joueur le plus proche pour orienter le Tengu
                 target = min(players, key=lambda p: abs(p.hitbox.centerx - en.hitbox.centerx))
-                en.update(target.hitbox)
+                en.update(target.hitbox, [p.rect for p in platforms])
 
                 enemy_hit = False
                 if en.health > 0 and attack_rect and en.hitbox.colliderect(attack_rect):
@@ -294,6 +317,10 @@ def main() -> None:
                 else:
                     game_over = True
 
+            if players[current_player].hitbox.right >= level_width:
+                stage_complete = True
+                stage_timer = 120
+
         canvas.blit(background, (-camera_x, 0))
         canvas.blit(background2, (WINDOW_WIDTH - camera_x, 0))
         for x in range(0, level_width, tile.get_width()):
@@ -305,8 +332,35 @@ def main() -> None:
         for en in enemies:
             if en.health > 0:
                 en.draw(canvas, camera_x)
+        if not isamu_recruited:
+            isamu.draw(canvas, camera_x)
         players[current_player].draw(canvas, camera_x)
         players[current_player].draw_health(canvas, heart)
+
+        if show_dialog:
+            overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))
+            canvas.blit(overlay, (0, 0))
+            font = pygame.font.Font(None, 24)
+            txt1 = font.render("Oishi: It's time for vengeance", True, (255, 255, 255))
+            txt2 = font.render("Isamu: yes", True, (255, 255, 255))
+            canvas.blit(txt1, (40, WINDOW_HEIGHT // 2 - 20))
+            canvas.blit(txt2, (40, WINDOW_HEIGHT // 2 + 5))
+            dialog_timer -= 1
+            if dialog_timer <= 0:
+                show_dialog = False
+
+        if stage_complete:
+            overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))
+            canvas.blit(overlay, (0, 0))
+            font = pygame.font.Font(None, 32)
+            msg = font.render("Stage Clear!", True, (255, 255, 255))
+            rect = msg.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
+            canvas.blit(msg, rect)
+            stage_timer -= 1
+            if stage_timer <= 0:
+                running = False
 
         if game_over:
             overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
