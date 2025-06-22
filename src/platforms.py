@@ -31,12 +31,13 @@ def load_platform_image() -> pygame.Surface:
     """Load and return the platform sprite."""
     sheet = pygame.image.load(str(PLATFORM_TILESET_IMG)).convert_alpha()
 
-    # Extract a larger portion of the tileset to avoid heavy pixelation.
-    # The transparent margin on the left of the tileset starts around
-    # x=0. The wooden platform graphics are located a bit further down
-    # in the sheet. We grab a wide 512x64 slice starting at (64, 448)
-    # so that scaling down keeps good quality.
-    region = pygame.Rect(64, 448, 512, 64)
+    # Extract a wider slice of the tileset to keep good quality when scaling
+    # down.  The wooden platform graphics sit near the bottom of the sheet but
+    # their exact vertical position changed between asset revisions.  To avoid
+    # hardcoding a value that might fall outside the image, we compute the
+    # region dynamically using the bottom 64 pixels of the tileset.
+    h = sheet.get_height()
+    region = pygame.Rect(64, max(0, h - 64), 512, 64)
     img = sheet.subsurface(region).copy()
 
     # Scale down using the same factor as the characters for pixel-perfect
