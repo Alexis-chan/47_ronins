@@ -11,6 +11,10 @@ class Enemy:
     image_path: Path
     attack_path: Path | None = None
     health: int = 1
+    patrol_left: int = 0
+    patrol_right: int = 0
+    speed: int = 1
+    direction: int = 1
 
     facing_left: bool = True
 
@@ -24,6 +28,9 @@ class Enemy:
         self.image = pygame.transform.scale(img, (scale, scale))
         self.rect = self.image.get_rect(midbottom=self.pos)
         self.hitbox = self.rect.copy()
+        if self.patrol_left == 0 and self.patrol_right == 0:
+            self.patrol_left = self.rect.left - 40
+            self.patrol_right = self.rect.right + 40
         if self.attack_path is not None:
             aimg = pygame.image.load(str(self.attack_path)).convert_alpha()
             self.attack_image = pygame.transform.scale(aimg, (scale, scale))
@@ -44,6 +51,12 @@ class Enemy:
         """Met à jour l'ennemi en faisant toujours face au joueur."""
         if self.health <= 0:
             return
+
+        # Patrol left and right
+        self.hitbox.x += self.direction * self.speed
+        self.rect.x = self.hitbox.x
+        if self.hitbox.left <= self.patrol_left or self.hitbox.right >= self.patrol_right:
+            self.direction *= -1
 
         # oriente le Tengu vers le joueur cible
         self.facing_left = player_rect.centerx < self.hitbox.centerx

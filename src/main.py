@@ -33,7 +33,7 @@ from settings import (
 )
 from player import Player
 from enemy import Enemy
-from platforms import create_level_platforms
+from platforms import create_level_platforms, create_level_ladders
 
 
 def main() -> None:
@@ -71,6 +71,7 @@ def main() -> None:
     background2 = pygame.transform.scale(background2, (WINDOW_WIDTH, WINDOW_HEIGHT))
 
     platforms = create_level_platforms()
+    ladders = create_level_ladders(platforms)
 
     level_width = WINDOW_WIDTH * 2
 
@@ -120,7 +121,20 @@ def main() -> None:
         (WINDOW_WIDTH // 2, WINDOW_HEIGHT),
         ENEMY_DIR / "Tengu_stand_left.png",
         ENEMY_DIR / "Tengu_attac.png",
+        patrol_left=WINDOW_WIDTH // 2 - 40,
+        patrol_right=WINDOW_WIDTH // 2 + 40,
     )
+
+    # Second Tengu placed on the third platform
+    plat = platforms[-1]
+    enemy2 = Enemy(
+        (plat.rect.centerx, plat.rect.top),
+        ENEMY_DIR / "Tengu_stand_left.png",
+        ENEMY_DIR / "Tengu_attac.png",
+        patrol_left=plat.rect.left,
+        patrol_right=plat.rect.right,
+    )
+    enemies = [enemy, enemy2]
 
     heart_img = pygame.image.load(str(HEART_IMG)).convert_alpha()
     heart_scale = int(heart_img.get_width() * 0.012)
@@ -160,12 +174,18 @@ def main() -> None:
 
     camera_x = 0
     running = True
+    game_over = False
     restart = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
+                if game_over:
+                    if event.key == pygame.K_o:
+                        restart = True
+                        running = False
+                    continue
                 if event.key == pygame.K_ESCAPE:
                     menu_open = not menu_open
                     if menu_open:
@@ -220,43 +240,59 @@ def main() -> None:
                     restart = True
                     running = False
 
-        players[current_player].jump_sound.set_volume(sfx_volume)
-        pressed = pygame.key.get_pressed()
-        players[current_player].update(pressed, [p.rect for p in platforms], controls)
-        camera_x = max(0, min(level_width - WINDOW_WIDTH, players[current_player].hitbox.centerx - WINDOW_WIDTH // 2))
-        # trouve le joueur le plus proche pour orienter le Tengu
-        target = min(
-            players,
-            key=lambda p: abs(p.hitbox.centerx - enemy.hitbox.centerx),
-        )
-        enemy.update(target.hitbox)
+        if not game_over:
+            players[current_player].jump_sound.set_volume(sfx_volume)
+            pressed = pygame.key.get_pressed()
+            players[current_player].update(
+                pressed,
+                [p.rect for p in platforms],
+                [l.rect for l in ladders],
+                controls,
+            )
+            camera_x = max(0, min(level_width - WINDOW_WIDTH, players[current_player].hitbox.centerx - WINDOW_WIDTH // 2))
+            attack_rect = players[current_player].get_attack_rect()
+            for en in enemies:
+                # trouve le joueur le plus proche pour orienter le Tengu
+                target = min(players, key=lambda p: abs(p.hitbox.centerx - en.hitbox.centerx))
+                en.update(target.hitbox)
 
-        # Gestion des collisions avec l'ennemi
-        attack_rect = players[current_player].get_attack_rect()
-        enemy_hit = False
-        if enemy.health > 0 and attack_rect and enemy.hitbox.colliderect(attack_rect):
-            enemy.take_damage(players[current_player].attack_damage())
-            enemy_hit = True
-            # joue le son correspondant au type d'attaque
-            if players[current_player].attack_type == "kick":
-                snd = kick_snd
-            else:
-                snd = punch_snd
-            snd.set_volume(sfx_volume)
-            snd.play()
-            tengu_hurt_snd.set_volume(sfx_volume)
-            tengu_hurt_snd.play()
-        enemy_attack = enemy.get_attack_rect()
-        if (
-            enemy.health > 0
-            and enemy_attack
-            and enemy_attack.colliderect(players[current_player].hitbox)
-        ):
-            from_left = enemy_attack.centerx < players[current_player].hitbox.centerx
-            players[current_player].take_damage(1, from_left)
-        elif enemy.health > 0 and players[current_player].hitbox.colliderect(enemy.hitbox) and not enemy_hit:
-            from_left = enemy.hitbox.centerx < players[current_player].hitbox.centerx
-            players[current_player].take_damage(1, from_left)
+                enemy_hit = False
+                if en.health > 0 and attack_rect and en.hitbox.colliderect(attack_rect):
+                    en.take_damage(players[current_player].attack_damage())
+                    enemy_hit = True
+                    if players[current_player].attack_type == "kick":
+                        snd = kick_snd
+                    else:
+                        snd = punch_snd
+                    snd.set_volume(sfx_volume)
+                    snd.play()
+                    tengu_hurt_snd.set_volume(sfx_volume)
+                    tengu_hurt_snd.play()
+                enemy_attack = en.get_attack_rect()
+                if (
+                    en.health > 0
+                    and enemy_attack
+                    and enemy_attack.colliderect(players[current_player].hitbox)
+                ):
+                    from_left = enemy_attack.centerx < players[current_player].hitbox.centerx
+                    players[current_player].take_damage(1, from_left)
+                elif en.health > 0 and players[current_player].hitbox.colliderect(en.hitbox) and not enemy_hit:
+                    from_left = en.hitbox.centerx < players[current_player].hitbox.centerx
+                    players[current_player].take_damage(1, from_left)
+
+            # Switch character if health depleted
+            if players[current_player].health <= 0:
+                next_idx = None
+                for i in range(len(players)):
+                    idx = (current_player + i + 1) % len(players)
+                    if players[idx].health > 0:
+                        next_idx = idx
+                        break
+                if next_idx is not None:
+                    players[next_idx].hitbox.midbottom = players[current_player].hitbox.midbottom
+                    current_player = next_idx
+                else:
+                    game_over = True
 
         canvas.blit(background, (-camera_x, 0))
         canvas.blit(background2, (WINDOW_WIDTH - camera_x, 0))
@@ -264,10 +300,22 @@ def main() -> None:
             canvas.blit(tile, (x - camera_x, WINDOW_HEIGHT - tile.get_height()))
         for plat in platforms:
             canvas.blit(plat.image, (plat.rect.x - camera_x, plat.rect.y))
-        if enemy.health > 0:
-            enemy.draw(canvas, camera_x)
+        for lad in ladders:
+            canvas.blit(lad.image, (lad.rect.x - camera_x, lad.rect.y))
+        for en in enemies:
+            if en.health > 0:
+                en.draw(canvas, camera_x)
         players[current_player].draw(canvas, camera_x)
         players[current_player].draw_health(canvas, heart)
+
+        if game_over:
+            overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)
+            overlay.fill((0, 0, 0, 180))
+            canvas.blit(overlay, (0, 0))
+            font = pygame.font.Font(None, 32)
+            msg = font.render("Game Over - Press 'O' to restart", True, (255, 255, 255))
+            rect = msg.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
+            canvas.blit(msg, rect)
 
         if menu_open:
             overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.SRCALPHA)

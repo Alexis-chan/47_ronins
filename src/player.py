@@ -38,6 +38,7 @@ class Player:
     invincible_time: int = 0
     invincible: bool = False
     landing_timer: int = 0
+    on_ladder: bool = False
 
     attack_type: str = ""
     name: str = "player"
@@ -87,6 +88,7 @@ class Player:
         self.invincible_time = 0
         self.invincible = False
         self.landing_timer = 0
+        self.on_ladder = False
 
     def _load_frames(self, paths: Path | list[Path]) -> list[pygame.Surface]:
         """Charge des frames depuis une feuille de sprites ou plusieurs images."""
@@ -235,6 +237,7 @@ class Player:
         self,
         pressed: pygame.key.ScancodeWrapper,
         platforms: list[pygame.Rect] | None = None,
+        ladders: list[pygame.Rect] | None = None,
         controls: dict[str, int] | None = None,
     ) -> None:
         """Met à jour la position et l’état du joueur pour la frame courante."""
@@ -253,7 +256,26 @@ class Player:
         if self.hitbox.left < 0:
             self.hitbox.left = 0
 
-        self.apply_gravity()
+        # Ladder check
+        self.on_ladder = False
+        active_ladder = None
+        if ladders:
+            for lad in ladders:
+                if self.hitbox.colliderect(lad):
+                    self.on_ladder = True
+                    active_ladder = lad
+                    break
+
+        if self.on_ladder:
+            self.hitbox.centerx = active_ladder.centerx
+            if pressed[controls.get("up", pygame.K_UP)]:
+                self.vel.y = -PLAYER_SPEED
+            elif pressed[controls.get("down", pygame.K_DOWN)]:
+                self.vel.y = PLAYER_SPEED
+            else:
+                self.vel.y = 0
+        else:
+            self.apply_gravity()
 
         # Vertical movement
         self.hitbox.y += int(self.vel.y)
