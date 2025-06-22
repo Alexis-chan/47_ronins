@@ -1,6 +1,6 @@
 """main.py
 Point d’entrée du jeu : initialisation de Pygame, création de la fenêtre, boucle principale.
-La scène est dessinée sur une surface 320×240 puis mise à l’échelle x3 → 960×720
+La scène est dessinée sur une surface 320×240 puis mise à l’échelle x4 → 1280×960
 pour un rendu pixel‑perfect sans flou.
 """
 

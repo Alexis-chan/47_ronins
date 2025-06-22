@@ -8,7 +8,8 @@ from pathlib import Path
 # —— Dimensions d’origine (pixel‑art) ——
 WINDOW_WIDTH: int = 320
 WINDOW_HEIGHT: int = 240
-UPSCALE: int = 3  # Facteur de mise à l’échelle (320×240 → 960×720)
+# Augmente le facteur de mise à l'échelle pour une résolution plus élevée.
+UPSCALE: int = 4  # 320×240 → 1280×960
 
 DISPLAY_WIDTH: int = WINDOW_WIDTH * UPSCALE
 DISPLAY_HEIGHT: int = WINDOW_HEIGHT * UPSCALE
