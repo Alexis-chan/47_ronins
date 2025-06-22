@@ -71,11 +71,13 @@ def main() -> None:
     background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
     background2 = pygame.image.load(str(background2_path)).convert()
     background2 = pygame.transform.scale(background2, (WINDOW_WIDTH, WINDOW_HEIGHT))
+    # Reuse the first background for the third screen for now
+    background3 = background.copy()
 
     platforms = create_level_platforms()
     ladders = create_level_ladders(platforms)
 
-    level_width = WINDOW_WIDTH * 2
+    level_width = WINDOW_WIDTH * 3
 
     tileset = pygame.image.load(str(TILESET_IMG)).convert_alpha()
     tile = tileset.subsurface(pygame.Rect(0, 0, 32, 32))
@@ -131,14 +133,14 @@ def main() -> None:
 
 
     enemy = Enemy(
-        (WINDOW_WIDTH // 2, WINDOW_HEIGHT),
+        (WINDOW_WIDTH // 2 - 40, WINDOW_HEIGHT),
         ENEMY_DIR / "Tengu_stand_left.png",
         ENEMY_DIR / "Tengu_attac.png",
         patrol_left=WINDOW_WIDTH // 2 - 100,
         patrol_right=WINDOW_WIDTH // 2 + 100,
     )
 
-    # Second Tengu placed on the third platform
+    # Second Tengu placed on the highest platform
     plat = platforms[-1]
     enemy2 = Enemy(
         (plat.rect.centerx, plat.rect.top - 80),
@@ -323,6 +325,7 @@ def main() -> None:
 
         canvas.blit(background, (-camera_x, 0))
         canvas.blit(background2, (WINDOW_WIDTH - camera_x, 0))
+        canvas.blit(background3, (2 * WINDOW_WIDTH - camera_x, 0))
         for x in range(0, level_width, tile.get_width()):
             canvas.blit(tile, (x - camera_x, WINDOW_HEIGHT - tile.get_height()))
         for plat in platforms:

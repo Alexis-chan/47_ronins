@@ -63,17 +63,21 @@ def create_level_platforms() -> list[Platform]:
     img = load_platform_image()
     platforms: list[Platform] = []
 
-    # First platform placed in the first screen
-    rect = img.get_rect(midbottom=(WINDOW_WIDTH // 2, WINDOW_HEIGHT - 60))
-    platforms.append(Platform(rect, img))
+    # --- Screen 1 ---
+    # Small platform near the start
+    rect1 = img.get_rect(midbottom=(80, WINDOW_HEIGHT - 60))
+    platforms.append(Platform(rect1, img))
 
-    # Second platform can only be reached from the first one
-    rect2 = img.get_rect(midbottom=(WINDOW_WIDTH // 2 + 60, WINDOW_HEIGHT - 100))
+    # Higher platform reached using a ladder
+    rect2 = img.get_rect(midbottom=(160, WINDOW_HEIGHT - 100))
     platforms.append(Platform(rect2, img))
 
-    # Third platform on the second screen
-    rect3 = img.get_rect(midbottom=(WINDOW_WIDTH + 100, WINDOW_HEIGHT - 80))
+    # --- Screen 2 ---
+    rect3 = img.get_rect(midbottom=(WINDOW_WIDTH + 120, WINDOW_HEIGHT - 70))
     platforms.append(Platform(rect3, img))
+
+    rect4 = img.get_rect(midbottom=(WINDOW_WIDTH + 200, WINDOW_HEIGHT - 120))
+    platforms.append(Platform(rect4, img))
 
     return platforms
 
@@ -83,9 +87,16 @@ def create_level_ladders(platforms: list[Platform]) -> list[Ladder]:
     img = load_ladder_image()
     ladders: list[Ladder] = []
 
-    # Ladder leading to the third platform
-    third = platforms[-1]
-    rect = img.get_rect(midbottom=(third.rect.centerx, third.rect.top))
-    ladders.append(Ladder(rect, img))
+    # Ladder from platform 1 to platform 2
+    if len(platforms) >= 2:
+        upper = platforms[1]
+        rect = img.get_rect(midbottom=(upper.rect.centerx, upper.rect.top))
+        ladders.append(Ladder(rect, img))
+
+    # Ladder leading to the highest platform
+    if len(platforms) >= 4:
+        high = platforms[3]
+        rect2 = img.get_rect(midbottom=(high.rect.centerx, high.rect.top))
+        ladders.append(Ladder(rect2, img))
 
     return ladders
