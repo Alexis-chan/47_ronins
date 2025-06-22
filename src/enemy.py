@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import pygame
-from settings import PLAYER_SCALE
+from settings import PLAYER_SCALE, GRAVITY, GROUND_Y
 
 @dataclass
 class Enemy:
@@ -21,6 +21,8 @@ class Enemy:
     hitbox: pygame.Rect | None = None
     attacking: bool = False
     attack_timer: int = 0
+    vel_y: float = 0.0
+    on_ground: bool = True
 
     def __post_init__(self) -> None:
         img = pygame.image.load(str(self.image_path)).convert_alpha()
@@ -28,6 +30,8 @@ class Enemy:
         self.image = pygame.transform.scale(img, (scale, scale))
         self.rect = self.image.get_rect(midbottom=self.pos)
         self.hitbox = self.rect.copy()
+        self.vel_y = 0.0
+        self.on_ground = self.rect.bottom >= GROUND_Y
         if self.patrol_left == 0 and self.patrol_right == 0:
             self.patrol_left = self.rect.left - 40
             self.patrol_right = self.rect.right + 40
@@ -47,10 +51,33 @@ class Enemy:
     def take_damage(self, amount: int) -> None:
         self.health = max(0, self.health - amount)
 
-    def update(self, player_rect: pygame.Rect) -> None:
+    def update(self, player_rect: pygame.Rect, platforms: list[pygame.Rect] | None = None) -> None:
         """Met à jour l'ennemi en faisant toujours face au joueur."""
         if self.health <= 0:
             return
+
+        # Gravity
+        if not self.on_ground:
+            self.vel_y += GRAVITY
+            self.hitbox.y += int(self.vel_y)
+            if self.hitbox.bottom >= GROUND_Y:
+                self.hitbox.bottom = GROUND_Y
+                self.vel_y = 0
+                self.on_ground = True
+            if platforms:
+                for plat in platforms:
+                    will_land = (
+                        self.vel_y >= 0
+                        and self.hitbox.bottom - int(self.vel_y) <= plat.top < self.hitbox.bottom
+                        and self.hitbox.right > plat.left
+                        and self.hitbox.left < plat.right
+                    )
+                    if will_land:
+                        self.hitbox.bottom = plat.top
+                        self.vel_y = 0
+                        self.on_ground = True
+                        break
+        self.rect.y = self.hitbox.y
 
         # Patrol left and right
         self.hitbox.x += self.direction * self.speed
