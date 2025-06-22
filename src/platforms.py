@@ -49,7 +49,9 @@ def load_platform_image() -> pygame.Surface:
 
 def load_ladder_image() -> pygame.Surface:
     """Load and scale the ladder sprite."""
-    path = ASSETS_DIR / "niveaux" / "Echelle.png"
+    # The asset was renamed from "Echelle.png" to "Echelle_corde.png" in the
+    # repository.  Update the path accordingly to avoid a FileNotFoundError.
+    path = ASSETS_DIR / "niveaux" / "Echelle_corde.png"
     img = pygame.image.load(str(path)).convert_alpha()
     w, h = img.get_size()
     img = pygame.transform.scale(img, (int(w * PLAYER_SCALE), int(h * PLAYER_SCALE)))
