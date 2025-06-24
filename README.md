@@ -9,13 +9,11 @@ Le jeu démarre en mode fenêtré par défaut (`FULLSCREEN = False`).
 
 ## Visualiser le prototype du premier stage
 
-Un script facultatif (`src/stage1_blueprint.py`) permet de charger l'image de
-référence `model_stage_1.png` (dossier `Exemple`) et d'afficher par-dessus les
-plates-formes et ennemis décrits dans `levels/level1.json`.
+Le script optionnel [`src/stage1_blueprint.py`](src/stage1_blueprint.py) affiche
+seulement l'arrière-plan principal ainsi qu'un repère pour le héros afin de
+tester la résolution du jeu. Aucun élément de décor ou ennemi n'est chargé ;
+c'est une base vierge pour préparer le niveau.
 
 ```bash
 python3 src/stage1_blueprint.py
 ```
-
-La fenêtre ainsi ouverte reproduit la disposition générale décrite dans les
-spécifications du stage.
