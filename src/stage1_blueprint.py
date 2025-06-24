@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-"""Prototype de stage basé sur ``model_stage_1.png``.
+"""Prototype de stage minimal.
 
-Ce script sert uniquement à visualiser rapidement le décor de référence.
-Contrairement à la version précédente, il n'affiche plus les plateformes
-ni les emplacements des ennemis ; seul le personnage est dessiné devant le
-fond. Les dimensions sont exprimées en pixels sur une surface 1920×512.
+Ce script sert à tester rapidement l'affichage dans la résolution finale.  Il
+charge uniquement l'arrière‑plan et un repère pour le personnage ; aucun autre
+élément (plateformes, ennemis, échelles…) n'est dessiné afin de repartir d'une
+"page blanche".  Les dimensions sont exprimées en pixels sur une surface
+1920×512.
 """
 
 from dataclasses import dataclass
@@ -19,7 +20,12 @@ import pygame
 SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 512
 
-IMAGE_PATH = Path(__file__).resolve().parent.parent / "Exemple" / "model_stage_1.png"
+IMAGE_PATH = (
+    Path(__file__).resolve().parent.parent
+    / "assets"
+    / "niveaux"
+    / "background_forest.png"
+)
 
 
 @dataclass
