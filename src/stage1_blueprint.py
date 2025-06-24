@@ -10,6 +10,7 @@ sur une surface 1920×512.
 
 from dataclasses import dataclass
 from pathlib import Path
+import json
 
 import pygame
 
@@ -20,6 +21,7 @@ SCREEN_WIDTH = 1920
 SCREEN_HEIGHT = 512
 
 IMAGE_PATH = Path(__file__).resolve().parent.parent / "Exemple" / "model_stage_1.png"
+LEVEL_FILE = Path(__file__).resolve().parent.parent / "levels" / "level1.json"
 
 
 @dataclass
@@ -45,31 +47,23 @@ class Hero:
     y: int
 
 
-# Plateformes
-PLATFORMS = [
-    Platform(160, 384, 128, 32),  # Plateforme gauche basse
-    Platform(480, 320, 128, 32),  # Plateforme centrale torii
-    Platform(640, 256, 128, 32),  # Plateforme connectee a l'escalier
-    # Escalier approximatif represente par petites marches
-    Platform(448, 416, 192, 32),  # zone de marche de l'escalier (approx.)
-    Platform(1344, 256, 320, 32),  # grande plateforme droite
-]
+# Les donnees du niveau (plateformes et ennemis) sont lues depuis un fichier
+# JSON pour faciliter les ajustements en fonction de l'image de reference.
+def load_level(path: Path) -> tuple[list[Platform], list[Enemy]]:
+    with open(path, "r", encoding="utf-8") as fh:
+        data = json.load(fh)
 
-# Echelle
-LADDER = Platform(1664, 288, 32, 160)
+    plats = [
+        Platform(p["x"], p["y"], p["width"], p["height"])
+        for p in data.get("platforms", [])
+    ]
+    enemies = [Enemy(e["x"], e["y"]) for e in data.get("enemies", [])]
+    return plats, enemies
 
-# Ennemis
-ENEMIES = [
-    Enemy(64, 416),
-    Enemy(176, 352),
-    Enemy(496, 288),
-    Enemy(576, 352),
-    Enemy(656, 224),
-    Enemy(1056, 64),
-    Enemy(1472, 224),
-]
 
-# Héros
+PLATFORMS, ENEMIES = load_level(LEVEL_FILE)
+
+# Position du heros d'apres l'image
 ISAMU = Hero(1728, 224)
 
 
@@ -100,8 +94,7 @@ def main() -> None:
         for plat in PLATFORMS:
             pygame.draw.rect(screen, (139, 69, 19), plat.rect())
 
-        # echelle
-        pygame.draw.rect(screen, (180, 160, 120), LADDER.rect())
+        # echelle (non utilisee dans ce prototype si non definie dans le JSON)
 
         # ennemis
         for en in ENEMIES:
