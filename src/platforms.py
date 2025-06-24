@@ -65,7 +65,10 @@ def create_level_platforms() -> list[Platform]:
 
     # --- Screen 1 ---
     # Small platform near the start
-    rect1 = img.get_rect(midbottom=(80, WINDOW_HEIGHT - 60))
+    # The hero must be able to reach this first platform with a jump.  With the
+    # current physics the maximum jump height is roughly 60 px, so we place the
+    # platform slightly lower than before to keep it within reach.
+    rect1 = img.get_rect(midbottom=(80, WINDOW_HEIGHT - 52))
     platforms.append(Platform(rect1, img))
 
     # Higher platform reached using a ladder
