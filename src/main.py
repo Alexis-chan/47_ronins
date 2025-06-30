@@ -71,13 +71,13 @@ def main() -> None:
     background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
     background2 = pygame.image.load(str(background2_path)).convert()
     background2 = pygame.transform.scale(background2, (WINDOW_WIDTH, WINDOW_HEIGHT))
-    # Reuse the first background for the third screen for now
-    background3 = background.copy()
+    # Precompute alternating backgrounds to cover the whole level
+    level_width = WINDOW_WIDTH * 3
+    num_screens = level_width // WINDOW_WIDTH
+    backgrounds = [background if i % 2 == 0 else background2 for i in range(num_screens)]
 
     platforms = create_level_platforms()
     ladders = create_level_ladders(platforms)
-
-    level_width = 1920
 
     tileset = pygame.image.load(str(TILESET_IMG)).convert_alpha()
     tile = tileset.subsurface(pygame.Rect(0, 0, 32, 32))
@@ -116,8 +116,8 @@ def main() -> None:
     }
 
     players = [
-        Player((1728, 120), oishi_assets, name="Oishi"),
-        Player((1728, 120), koji_assets, name="Koji"),
+        Player((40, WINDOW_HEIGHT - 20), oishi_assets, name="Oishi"),
+        Player((40, WINDOW_HEIGHT - 20), koji_assets, name="Koji"),
     ]
     current_player = 0
 
@@ -132,19 +132,24 @@ def main() -> None:
     stage_timer = 0
 
 
-    enemy_positions = [
-        (64, 223),
-        (176, 189),
-        (496, 154),
-        (576, 189),
-        (656, 120),
-        (1056, 34),
-        (1472, 120),
-    ]
-    enemies = [
-        Enemy((x, y), ENEMY_DIR / "Tengu_stand_left.png", ENEMY_DIR / "Tengu_attac.png")
-        for x, y in enemy_positions
-    ]
+    enemy = Enemy(
+        (WINDOW_WIDTH // 2 - 40, WINDOW_HEIGHT),
+        ENEMY_DIR / "Tengu_stand_left.png",
+        ENEMY_DIR / "Tengu_attac.png",
+        patrol_left=WINDOW_WIDTH // 2 - 100,
+        patrol_right=WINDOW_WIDTH // 2 + 100,
+    )
+
+    # Second Tengu placed on the highest platform
+    plat = platforms[-1]
+    enemy2 = Enemy(
+        (plat.rect.centerx, plat.rect.top - 80),
+        ENEMY_DIR / "Tengu_stand_left.png",
+        ENEMY_DIR / "Tengu_attac.png",
+        patrol_left=plat.rect.left - 50,
+        patrol_right=plat.rect.right + 50,
+    )
+    enemies = [enemy, enemy2]
 
     heart_img = pygame.image.load(str(HEART_IMG)).convert_alpha()
     heart_scale = int(heart_img.get_width() * 0.012)
@@ -318,9 +323,8 @@ def main() -> None:
                 stage_complete = True
                 stage_timer = 120
 
-        canvas.blit(background, (-camera_x, 0))
-        canvas.blit(background2, (WINDOW_WIDTH - camera_x, 0))
-        canvas.blit(background3, (2 * WINDOW_WIDTH - camera_x, 0))
+        for i, bg in enumerate(backgrounds):
+            canvas.blit(bg, (i * WINDOW_WIDTH - camera_x, 0))
         for x in range(0, level_width, tile.get_width()):
             canvas.blit(tile, (x - camera_x, WINDOW_HEIGHT - tile.get_height()))
         for plat in platforms:
