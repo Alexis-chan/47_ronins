@@ -58,48 +58,63 @@ def load_ladder_image() -> pygame.Surface:
     return img
 
 
+def load_stair_image() -> pygame.Surface:
+    """Load and scale the wooden stair sprite."""
+    path = ASSETS_DIR / "niveaux" / "Stair_wood_1.png"
+    img = pygame.image.load(str(path)).convert_alpha()
+    w, h = img.get_size()
+    img = pygame.transform.scale(img, (int(w * PLAYER_SCALE), int(h * PLAYER_SCALE)))
+    return img
+
+
 def create_level_platforms() -> list[Platform]:
-    """Create all platforms for the level."""
-    img = load_platform_image()
+    """Create all platforms for the level following the reference layout."""
+    base = load_platform_image()
+    stair_src = load_stair_image()
+
     platforms: list[Platform] = []
 
-    # --- Screen 1 ---
-    # Small platform near the start
-    # The hero must be able to reach this first platform with a jump.  With the
-    # current physics the maximum jump height is roughly 60 px, so we place the
-    # platform slightly lower than before to keep it within reach.
-    rect1 = img.get_rect(midbottom=(80, WINDOW_HEIGHT - 52))
-    platforms.append(Platform(rect1, img))
+    def add_platform(tiles: int, x: int, bottom: int) -> None:
+        width = base.get_width() * tiles
+        img = pygame.transform.scale(base, (width, base.get_height()))
+        rect = img.get_rect(midbottom=(x, bottom))
+        platforms.append(Platform(rect, img))
 
-    # Higher platform reached using a ladder
-    rect2 = img.get_rect(midbottom=(160, WINDOW_HEIGHT - 100))
-    platforms.append(Platform(rect2, img))
+    # Bottom left small platform
+    add_platform(2, 160, 206)
 
-    # --- Screen 2 ---
-    rect3 = img.get_rect(midbottom=(WINDOW_WIDTH + 120, WINDOW_HEIGHT - 70))
-    platforms.append(Platform(rect3, img))
+    # Central mid platform with torii
+    add_platform(2, 480, 171)
 
-    rect4 = img.get_rect(midbottom=(WINDOW_WIDTH + 200, WINDOW_HEIGHT - 120))
-    platforms.append(Platform(rect4, img))
+    # Upper left platform reached by the stairs
+    add_platform(2, 640, 137)
+
+    # Large upper right platform
+    add_platform(5, 1344, 137)
+
+    # Stairs descending to the left (10 steps)
+    steps = 10
+    step_w = (640 - 448) // steps or 1
+    step_h = (223 - 137) // steps or 1
+    for i in range(steps):
+        img = pygame.transform.scale(stair_src, (step_w, step_h))
+        x = 640 - i * step_w
+        bottom = 137 + (i + 1) * step_h
+        rect = img.get_rect(midbottom=(x, bottom))
+        platforms.append(Platform(rect, img))
 
     return platforms
 
 
 def create_level_ladders(platforms: list[Platform]) -> list[Ladder]:
     """Create ladders for the level."""
-    img = load_ladder_image()
+    raw = load_ladder_image()
     ladders: list[Ladder] = []
 
-    # Ladder from platform 1 to platform 2
-    if len(platforms) >= 2:
-        upper = platforms[1]
-        rect = img.get_rect(midbottom=(upper.rect.centerx, upper.rect.top))
-        ladders.append(Ladder(rect, img))
-
-    # Ladder leading to the highest platform
-    if len(platforms) >= 4:
-        high = platforms[3]
-        rect2 = img.get_rect(midbottom=(high.rect.centerx, high.rect.top))
-        ladders.append(Ladder(rect2, img))
+    # Rope ladder on the far right platform
+    height = int(WINDOW_HEIGHT - 154)
+    img = pygame.transform.scale(raw, (raw.get_width(), height))
+    rect = img.get_rect(midbottom=(1664, WINDOW_HEIGHT))
+    ladders.append(Ladder(rect, img))
 
     return ladders
