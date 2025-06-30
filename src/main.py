@@ -27,6 +27,7 @@ from settings import (
     KOJI_DIR,
     HEART_IMG,
     SNES_IMG,
+    JUMP_SPEED,
 )
 from player import Player
 
@@ -116,7 +117,12 @@ def main() -> None:
 
     players = [
         Player((40, WINDOW_HEIGHT - 20), oishi_assets, name="Oishi"),
-        Player((40, WINDOW_HEIGHT - 20), koji_assets, name="Koji"),
+        Player(
+            (40, WINDOW_HEIGHT - 20),
+            koji_assets,
+            name="Koji",
+            jump_speed=JUMP_SPEED * 1.2,
+        ),
     ]
     current_player = 0
 

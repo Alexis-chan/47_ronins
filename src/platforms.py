@@ -89,7 +89,13 @@ def load_wall_image() -> pygame.Surface:
     path = ASSETS_DIR / "niveaux" / "Wall_wood_side.png"
     img = pygame.image.load(str(path)).convert_alpha()
     w, h = img.get_size()
-    img = pygame.transform.scale(img, (int(w * PLAYER_SCALE), int(h * PLAYER_SCALE)))
+    img = pygame.transform.scale(
+        img,
+        (
+            int(w * PLAYER_SCALE),
+            int(h * PLAYER_SCALE * 0.5),
+        ),
+    )
     return img
 
 

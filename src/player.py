@@ -39,11 +39,18 @@ class Player:
     invincible: bool = False
     landing_timer: int = 0
     on_ladder: bool = False
+    jump_speed: float = JUMP_SPEED
 
     attack_type: str = ""
     name: str = "player"
 
-    def __init__(self, pos: tuple[int, int], asset_paths: dict[str, Path], name: str = "player"):
+    def __init__(
+        self,
+        pos: tuple[int, int],
+        asset_paths: dict[str, Path],
+        name: str = "player",
+        jump_speed: float = JUMP_SPEED,
+    ):
         """Initialise le joueur avec les sprites du personnage choisi."""
 
         self.name = name
@@ -81,6 +88,7 @@ class Player:
         self.on_ground = False
         self.facing_left = False
         self.jump_sound = pygame.mixer.Sound(str(JUMP_SOUND_FILE))
+        self.jump_speed = jump_speed
         self.is_attacking = False
         self.attack_type = ""
         self.health = 6 if name.lower() == "koji" else 5
@@ -196,7 +204,7 @@ class Player:
 
         # Saut : possible uniquement quand le joueur est au sol
         if pressed[controls.get("jump", pygame.K_SPACE)] and self.on_ground:
-            self.vel.y = JUMP_SPEED
+            self.vel.y = self.jump_speed
             self.on_ground = False
             self.jump_phase = "start"
             self.frame_index = 0
