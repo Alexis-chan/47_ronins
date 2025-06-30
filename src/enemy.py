@@ -3,7 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 import pygame
-from settings import PLAYER_SCALE, GRAVITY, GROUND_Y
+from settings import (
+    PLAYER_SCALE,
+    GRAVITY,
+    GROUND_Y,
+    WINDOW_WIDTH,
+    WINDOW_HEIGHT,
+    ENEMY_DIR,
+)
 
 @dataclass
 class Enemy:
@@ -110,3 +117,15 @@ class Enemy:
         else:
             x = self.hitbox.right
         return pygame.Rect(x, y, width, height)
+
+
+def create_level_enemies() -> list[Enemy]:
+    """Create the Tengu enemies for the level."""
+    stand = ENEMY_DIR / "Tengu_stand_left.png"
+    attack = ENEMY_DIR / "Tengu_attac.png"
+    enemies: list[Enemy] = []
+
+    enemies.append(Enemy((WINDOW_WIDTH + 40, WINDOW_HEIGHT - 48), stand, attack))
+    enemies.append(Enemy((2 * WINDOW_WIDTH + 120, WINDOW_HEIGHT - 96), stand, attack))
+
+    return enemies
