@@ -63,13 +63,24 @@ def main() -> None:
     background = pygame.transform.scale(background, (WINDOW_WIDTH, WINDOW_HEIGHT))
     background2 = pygame.image.load(str(background2_path)).convert()
     background2 = pygame.transform.scale(background2, (WINDOW_WIDTH, WINDOW_HEIGHT))
-    # Single screen background
-    level_width = WINDOW_WIDTH
-    backgrounds = [background]
 
-    platforms: list = []
-    ladders: list = []
-    stairs: list = []
+    # 4-screen level
+    backgrounds = [background, background2, background, background2]
+    level_width = WINDOW_WIDTH * len(backgrounds)
+
+    from platforms import (
+        create_level_platforms,
+        create_level_ladders,
+        create_level_stairs,
+        create_level_walls,
+    )
+    from enemy import create_level_enemies
+
+    platforms = create_level_platforms()
+    ladders = create_level_ladders(platforms)
+    stairs = create_level_stairs()
+    walls = create_level_walls()
+    enemies = create_level_enemies()
 
  
     # Entités
@@ -110,8 +121,6 @@ def main() -> None:
     current_player = 0
 
     stage_timer = 0
-
-    enemies: list = []
 
     heart_img = pygame.image.load(str(HEART_IMG)).convert_alpha()
     heart_scale = int(heart_img.get_width() * 0.012)
@@ -225,10 +234,20 @@ def main() -> None:
                 pressed,
                 [p.rect for p in platforms],
                 [l.rect for l in ladders],
+                [w.rect for w in walls],
                 controls,
             )
             camera_x = max(0, min(level_width - WINDOW_WIDTH, players[current_player].hitbox.centerx - WINDOW_WIDTH // 2))
             attack_rect = players[current_player].get_attack_rect()
+
+            for enemy in enemies:
+                enemy.update(players[current_player].hitbox, [p.rect for p in platforms])
+                e_rect = enemy.get_attack_rect()
+                if e_rect and e_rect.colliderect(players[current_player].hitbox):
+                    players[current_player].take_damage(1, from_left=e_rect.centerx < players[current_player].hitbox.centerx)
+                if attack_rect and attack_rect.colliderect(enemy.hitbox):
+                    enemy.take_damage(players[current_player].attack_damage())
+            enemies = [e for e in enemies if e.health > 0]
 
             # Switch character if health depleted
             if players[current_player].health <= 0:
@@ -256,6 +275,10 @@ def main() -> None:
             canvas.blit(lad.image, (lad.rect.x - camera_x, lad.rect.y))
         for st in stairs:
             canvas.blit(st.image, (st.rect.x - camera_x, st.rect.y))
+        for wall in walls:
+            canvas.blit(wall.image, (wall.rect.x - camera_x, wall.rect.y))
+        for enemy in enemies:
+            enemy.draw(canvas, camera_x)
         players[current_player].draw(canvas, camera_x)
         players[current_player].draw_health(canvas, heart)
 

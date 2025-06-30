@@ -238,6 +238,7 @@ class Player:
         pressed: pygame.key.ScancodeWrapper,
         platforms: list[pygame.Rect] | None = None,
         ladders: list[pygame.Rect] | None = None,
+        walls: list[pygame.Rect] | None = None,
         controls: dict[str, int] | None = None,
     ) -> None:
         """Met à jour la position et l’état du joueur pour la frame courante."""
@@ -255,6 +256,13 @@ class Player:
         self.hitbox.x += int(self.vel.x)
         if self.hitbox.left < 0:
             self.hitbox.left = 0
+        if walls:
+            for wall in walls:
+                if self.hitbox.colliderect(wall):
+                    if self.vel.x > 0:
+                        self.hitbox.right = wall.left
+                    elif self.vel.x < 0:
+                        self.hitbox.left = wall.right
 
         # Ladder check
         self.on_ladder = False

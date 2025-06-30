@@ -35,6 +35,14 @@ class Staircase:
     image: pygame.Surface
 
 
+@dataclass
+class Wall:
+    """Solid vertical wall blocking the player."""
+
+    rect: pygame.Rect
+    image: pygame.Surface
+
+
 def load_platform_image() -> pygame.Surface:
     """Load and return the platform sprite."""
     sheet = pygame.image.load(str(PLATFORM_TILESET_IMG)).convert_alpha()
@@ -76,29 +84,51 @@ def load_stair_image() -> pygame.Surface:
     return img
 
 
+def load_wall_image() -> pygame.Surface:
+    """Load and scale the wooden wall sprite."""
+    path = ASSETS_DIR / "niveaux" / "Wall_wood_side.png"
+    img = pygame.image.load(str(path)).convert_alpha()
+    w, h = img.get_size()
+    img = pygame.transform.scale(img, (int(w * PLAYER_SCALE), int(h * PLAYER_SCALE)))
+    return img
+
+
 def create_level_platforms() -> list[Platform]:
     """Create all platforms for the level."""
     img = load_platform_image()
     platforms: list[Platform] = []
 
     # --- Screen 1 ---
-    # Small platform near the start
-    # The hero must be able to reach this first platform with a jump.  With the
-    # current physics the maximum jump height is roughly 60 px, so we place the
-    # platform slightly lower than before to keep it within reach.
-    rect1 = img.get_rect(midbottom=(80, WINDOW_HEIGHT - 52))
+    rect1 = img.get_rect(midbottom=(60, WINDOW_HEIGHT - 48))
     platforms.append(Platform(rect1, img))
 
-    # Higher platform reached using a ladder
-    rect2 = img.get_rect(midbottom=(160, WINDOW_HEIGHT - 100))
+    # Elevated walkway accessed via ladder
+    rect2 = img.get_rect(midbottom=(120, WINDOW_HEIGHT - 112))
     platforms.append(Platform(rect2, img))
-
-    # --- Screen 2 ---
-    rect3 = img.get_rect(midbottom=(WINDOW_WIDTH + 120, WINDOW_HEIGHT - 70))
+    rect3 = img.get_rect(midbottom=(160, WINDOW_HEIGHT - 112))
     platforms.append(Platform(rect3, img))
 
-    rect4 = img.get_rect(midbottom=(WINDOW_WIDTH + 200, WINDOW_HEIGHT - 120))
+    # --- Screen 2 --- (continuation of high path)
+    rect4 = img.get_rect(midbottom=(WINDOW_WIDTH + 40, WINDOW_HEIGHT - 112))
     platforms.append(Platform(rect4, img))
+    rect5 = img.get_rect(midbottom=(WINDOW_WIDTH + 120, WINDOW_HEIGHT - 112))
+    platforms.append(Platform(rect5, img))
+
+    # Ground platform after a gap
+    rect6 = img.get_rect(midbottom=(WINDOW_WIDTH + 220, WINDOW_HEIGHT - 48))
+    platforms.append(Platform(rect6, img))
+
+    # --- Screen 3 --- staircase leads back up
+    rect7 = img.get_rect(midbottom=(2 * WINDOW_WIDTH + 80, WINDOW_HEIGHT - 96))
+    platforms.append(Platform(rect7, img))
+    rect8 = img.get_rect(midbottom=(2 * WINDOW_WIDTH + 160, WINDOW_HEIGHT - 96))
+    platforms.append(Platform(rect8, img))
+
+    # --- Screen 4 --- final high path
+    rect9 = img.get_rect(midbottom=(3 * WINDOW_WIDTH + 80, WINDOW_HEIGHT - 120))
+    platforms.append(Platform(rect9, img))
+    rect10 = img.get_rect(midbottom=(3 * WINDOW_WIDTH + 160, WINDOW_HEIGHT - 120))
+    platforms.append(Platform(rect10, img))
 
     return platforms
 
@@ -108,11 +138,16 @@ def create_level_ladders(platforms: list[Platform]) -> list[Ladder]:
     img = load_ladder_image()
     ladders: list[Ladder] = []
 
-    # Single ladder on the far right leading to the highest platform
-    if len(platforms) >= 4:
-        high = platforms[3]
-        rect = img.get_rect(midbottom=(high.rect.centerx, high.rect.top))
-        ladders.append(Ladder(rect, img))
+    if len(platforms) >= 10:
+        # Ladder at the start to reach the high path
+        start_high = platforms[1]
+        rect1 = img.get_rect(midbottom=(start_high.rect.centerx, start_high.rect.top))
+        ladders.append(Ladder(rect1, img))
+
+        # Ladder at the end to descend from the final platform
+        end_high = platforms[-1]
+        rect2 = img.get_rect(midbottom=(end_high.rect.centerx, end_high.rect.top))
+        ladders.append(Ladder(rect2, img))
 
     return ladders
 
@@ -122,8 +157,28 @@ def create_level_stairs() -> list[Staircase]:
     img = load_stair_image()
     stairs: list[Staircase] = []
 
-    # Place the staircase near the middle of the level
-    rect = img.get_rect(midbottom=(WINDOW_WIDTH + 40, WINDOW_HEIGHT))
-    stairs.append(Staircase(rect, img))
+    # First staircase used to leave the upper path
+    rect1 = img.get_rect(midbottom=(WINDOW_WIDTH + 160, WINDOW_HEIGHT))
+    stairs.append(Staircase(rect1, img))
+
+    # Second staircase bringing the player back up later in the level
+    rect2 = img.get_rect(midbottom=(2 * WINDOW_WIDTH + 40, WINDOW_HEIGHT))
+    stairs.append(Staircase(rect2, img))
 
     return stairs
+
+
+def create_level_walls() -> list[Wall]:
+    """Create blocking walls for the level."""
+    img = load_wall_image()
+    walls: list[Wall] = []
+
+    # Wall at the start forcing ladder use
+    rect1 = img.get_rect(midbottom=(100, WINDOW_HEIGHT))
+    walls.append(Wall(rect1, img))
+
+    # Wall before the final ladder
+    rect2 = img.get_rect(midbottom=(3 * WINDOW_WIDTH + 120, WINDOW_HEIGHT))
+    walls.append(Wall(rect2, img))
+
+    return walls
