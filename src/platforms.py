@@ -27,6 +27,14 @@ class Ladder:
     image: pygame.Surface
 
 
+@dataclass
+class Staircase:
+    """Decorative staircase used to reach a higher platform."""
+
+    rect: pygame.Rect
+    image: pygame.Surface
+
+
 def load_platform_image() -> pygame.Surface:
     """Load and return the platform sprite."""
     sheet = pygame.image.load(str(PLATFORM_TILESET_IMG)).convert_alpha()
@@ -35,9 +43,10 @@ def load_platform_image() -> pygame.Surface:
     # down.  The wooden platform graphics sit near the bottom of the sheet but
     # their exact vertical position changed between asset revisions.  To avoid
     # hardcoding a value that might fall outside the image, we compute the
-    # region dynamically using the bottom 64 pixels of the tileset.
+    # region dynamically using the bottom 256 pixels of the tileset to ensure
+    # the scaled image remains visible.
     h = sheet.get_height()
-    region = pygame.Rect(64, max(0, h - 64), 512, 64)
+    region = pygame.Rect(64, max(0, h - 256), 512, 256)
     img = sheet.subsurface(region).copy()
 
     # Scale down using the same factor as the characters for pixel-perfect
@@ -52,6 +61,15 @@ def load_ladder_image() -> pygame.Surface:
     # The asset was renamed from "Echelle.png" to "Echelle_corde.png" in the
     # repository.  Update the path accordingly to avoid a FileNotFoundError.
     path = ASSETS_DIR / "niveaux" / "Echelle_corde.png"
+    img = pygame.image.load(str(path)).convert_alpha()
+    w, h = img.get_size()
+    img = pygame.transform.scale(img, (int(w * PLAYER_SCALE), int(h * PLAYER_SCALE)))
+    return img
+
+
+def load_stair_image() -> pygame.Surface:
+    """Load and scale the wooden staircase sprite."""
+    path = ASSETS_DIR / "niveaux" / "Stair_wood_1.png"
     img = pygame.image.load(str(path)).convert_alpha()
     w, h = img.get_size()
     img = pygame.transform.scale(img, (int(w * PLAYER_SCALE), int(h * PLAYER_SCALE)))
@@ -90,16 +108,22 @@ def create_level_ladders(platforms: list[Platform]) -> list[Ladder]:
     img = load_ladder_image()
     ladders: list[Ladder] = []
 
-    # Ladder from platform 1 to platform 2
-    if len(platforms) >= 2:
-        upper = platforms[1]
-        rect = img.get_rect(midbottom=(upper.rect.centerx, upper.rect.top))
-        ladders.append(Ladder(rect, img))
-
-    # Ladder leading to the highest platform
+    # Single ladder on the far right leading to the highest platform
     if len(platforms) >= 4:
         high = platforms[3]
-        rect2 = img.get_rect(midbottom=(high.rect.centerx, high.rect.top))
-        ladders.append(Ladder(rect2, img))
+        rect = img.get_rect(midbottom=(high.rect.centerx, high.rect.top))
+        ladders.append(Ladder(rect, img))
 
     return ladders
+
+
+def create_level_stairs() -> list[Staircase]:
+    """Create the decorative staircase for the level."""
+    img = load_stair_image()
+    stairs: list[Staircase] = []
+
+    # Place the staircase near the middle of the level
+    rect = img.get_rect(midbottom=(WINDOW_WIDTH + 40, WINDOW_HEIGHT))
+    stairs.append(Staircase(rect, img))
+
+    return stairs
