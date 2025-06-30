@@ -34,7 +34,11 @@ from settings import (
 )
 from player import Player
 from enemy import Enemy
-from platforms import create_level_platforms, create_level_ladders
+from platforms import (
+    create_level_platforms,
+    create_level_ladders,
+    create_level_stairs,
+)
 from npc import NPC
 
 
@@ -78,6 +82,7 @@ def main() -> None:
 
     platforms = create_level_platforms()
     ladders = create_level_ladders(platforms)
+    stairs = create_level_stairs()
 
     tileset = pygame.image.load(str(TILESET_IMG)).convert_alpha()
     tile = tileset.subsurface(pygame.Rect(0, 0, 32, 32))
@@ -149,7 +154,41 @@ def main() -> None:
         patrol_left=plat.rect.left - 50,
         patrol_right=plat.rect.right + 50,
     )
-    enemies = [enemy, enemy2]
+
+    # Additional Tengu enemies across the stage
+    enemy3 = Enemy(
+        (WINDOW_WIDTH + 60, WINDOW_HEIGHT),
+        ENEMY_DIR / "Tengu_stand_left.png",
+        ENEMY_DIR / "Tengu_attac.png",
+        patrol_left=WINDOW_WIDTH + 20,
+        patrol_right=WINDOW_WIDTH + 100,
+    )
+
+    enemy4 = Enemy(
+        (WINDOW_WIDTH + 200, WINDOW_HEIGHT),
+        ENEMY_DIR / "Tengu_stand_left.png",
+        ENEMY_DIR / "Tengu_attac.png",
+        patrol_left=WINDOW_WIDTH + 160,
+        patrol_right=WINDOW_WIDTH + 240,
+    )
+
+    enemy5 = Enemy(
+        (WINDOW_WIDTH * 2 + 40, WINDOW_HEIGHT),
+        ENEMY_DIR / "Tengu_stand_left.png",
+        ENEMY_DIR / "Tengu_attac.png",
+        patrol_left=WINDOW_WIDTH * 2,
+        patrol_right=WINDOW_WIDTH * 2 + 80,
+    )
+
+    enemy6 = Enemy(
+        (WINDOW_WIDTH * 2 + 160, WINDOW_HEIGHT),
+        ENEMY_DIR / "Tengu_stand_left.png",
+        ENEMY_DIR / "Tengu_attac.png",
+        patrol_left=WINDOW_WIDTH * 2 + 120,
+        patrol_right=WINDOW_WIDTH * 2 + 200,
+    )
+
+    enemies = [enemy, enemy2, enemy3, enemy4, enemy5, enemy6]
 
     heart_img = pygame.image.load(str(HEART_IMG)).convert_alpha()
     heart_scale = int(heart_img.get_width() * 0.012)
@@ -331,6 +370,8 @@ def main() -> None:
             canvas.blit(plat.image, (plat.rect.x - camera_x, plat.rect.y))
         for lad in ladders:
             canvas.blit(lad.image, (lad.rect.x - camera_x, lad.rect.y))
+        for st in stairs:
+            canvas.blit(st.image, (st.rect.x - camera_x, st.rect.y))
         for en in enemies:
             if en.health > 0:
                 en.draw(canvas, camera_x)
